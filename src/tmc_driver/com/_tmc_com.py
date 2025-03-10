@@ -1,31 +1,47 @@
 #pylint: disable=import-error
 #pylint: disable=broad-exception-caught
 #pylint: disable=unused-import
-#pylint: disable=duplicate-code
 """
-TmcSpi stepper driver spi module
+TmcCom stepper driver communication module
 """
 
 import time
 import struct
 from typing import List
-from .reg._tmc_220x_reg_addr import TmcRegAddr
-from .reg._tmc_gstat import GStat
-from ._tmc_logger import TmcLogger, Loglevel
+from .._tmc_logger import TmcLogger, Loglevel
 
 
-class TmcSpi:
-    """TmcSpi
+def compute_crc8_atm(datagram, initial_value=0):
+    """this function calculates the crc8 parity bit
 
-    this class is used to communicate with the TMC via SPI
-    it can be used to change the settings of the TMC.
-    like the current or the microsteppingmode
+    Args:
+        datagram (list): datagram
+        initial_value (int): initial value (Default value = 0)
+    """
+    crc = initial_value
+    # Iterate bytes in data
+    for byte in datagram:
+        # Iterate bits in byte
+        for _ in range(0, 8):
+            if (crc >> 7) ^ (byte & 0x01):
+                crc = ((crc << 1) ^ 0x07) & 0xFF
+            else:
+                crc = (crc << 1) & 0xFF
+            # Shift to next bit
+            byte = byte >> 1
+    return crc
+
+
+
+class TmcCom:
+    """TmcCom
     """
     _tmc_logger:TmcLogger = None
+    _tmc_registers = None
 
     mtr_id:int = 0
-    r_frame:List[int] = [0x55, 0, 0, 0  ]
-    w_frame:List[int] = [0x55, 0, 0, 0 , 0, 0, 0, 0 ]
+    r_frame:List[int]
+    w_frame:List[int]
     communication_pause:int = 0
     error_handler_running:bool = False
 
@@ -38,6 +54,17 @@ class TmcSpi:
     def tmc_logger(self, tmc_logger):
         """set the tmc_logger"""
         self._tmc_logger = tmc_logger
+
+    @property
+    def tmc_registers(self):
+        """get the tmc_registers"""
+        return self._tmc_registers
+
+    @tmc_registers.setter
+    def tmc_registers(self, tmc_registers):
+        """set the tmc_registers"""
+        self._tmc_registers = tmc_registers
+
 
 
     def __init__(self,
@@ -54,84 +81,59 @@ class TmcSpi:
         self.mtr_id = mtr_id
 
 
-
-    def __del__(self):
-        """destructor"""
-        raise NotImplementedError
+    # def init(self):
+    #     """init"""
 
 
-
-    def compute_crc8_atm(self, datagram, initial_value=0):
-        """this function calculates the crc8 parity bit
-
-        Args:
-            datagram (list): datagram
-            initial_value (int): initial value (Default value = 0)
-        """
-        crc = initial_value
-        # Iterate bytes in data
-        for byte in datagram:
-            # Iterate bits in byte
-            for _ in range(0, 8):
-                if (crc >> 7) ^ (byte & 0x01):
-                    crc = ((crc << 1) ^ 0x07) & 0xFF
-                else:
-                    crc = (crc << 1) & 0xFF
-                # Shift to next bit
-                byte = byte >> 1
-        return crc
+    # def __del__(self):
+    #     """destructor"""
 
 
-
-    def read_reg(self, register:TmcRegAddr):
+    def read_reg(self, addr:hex):
         """reads the registry on the TMC with a given address.
         returns the binary value of that register
 
         Args:
-            register (int): HEX, which register to read
+            addr (int): HEX, which register to read
         """
         raise NotImplementedError
 
 
-
-    def read_int(self, register:TmcRegAddr, tries:int = 10):
+    def read_int(self, addr:hex, tries:int = 10):
         """this function tries to read the registry of the TMC 10 times
         if a valid answer is returned, this function returns it as an integer
 
         Args:
-            register (int): HEX, which register to read
+            addr (int): HEX, which register to read
             tries (int): how many tries, before error is raised (Default value = 10)
         """
         raise NotImplementedError
 
 
-
-    def write_reg(self, register:TmcRegAddr, val:int):
+    def write_reg(self, addr:hex, val:int):
         """this function can write a value to the register of the tmc
         1. use read_int to get the current setting of the TMC
         2. then modify the settings as wished
         3. write them back to the driver with this function
 
         Args:
-            register (int): HEX, which register to write
+            addr (int): HEX, which register to write
             val (int): value for that register
         """
         raise NotImplementedError
 
 
-
-    def write_reg_check(self, register:TmcRegAddr, val:int, tries:int=10):
+    def write_reg_check(self, addr:hex, val:int, tries:int=10):
         """this function als writes a value to the register of the TMC
         but it also checks if the writing process was successfully by checking
         the InterfaceTransmissionCounter before and after writing
 
         Args:
-            register: HEX, which register to write
+            addr: HEX, which register to write
             val: value for that register
             tries: how many tries, before error is raised (Default value = 10)
         """
         raise NotImplementedError
-
 
 
     def flush_serial_buffer(self):
@@ -139,17 +141,15 @@ class TmcSpi:
         raise NotImplementedError
 
 
-
     def handle_error(self):
         """error handling"""
         raise NotImplementedError
 
 
-
-    def test_com(self, register:TmcRegAddr):
+    def test_com(self, addr):
         """test com connection
 
         Args:
-            register (int):  HEX, which register to read
+            addr (int):  HEX, which register to test
         """
         raise NotImplementedError

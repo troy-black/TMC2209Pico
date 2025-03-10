@@ -1,12 +1,12 @@
 """
-test file for testing basic movement
+test file for testing the UART connection
 """
 
 import time
 try:
-    from src.tmc_driver.tmc_2209 import *
+    from src.tmc_driver.tmc_2240 import *
 except ModuleNotFoundError:
-    from tmc_driver.tmc_2209 import *
+    from tmc_driver.tmc_2240 import *
 
 
 print("---")
@@ -14,7 +14,7 @@ print("SCRIPT START")
 print("---")
 
 
-
+tmc:Tmc2240 = None
 
 
 #-----------------------------------------------------------------------
@@ -22,18 +22,14 @@ print("---")
 # use your pins for pin_en, pin_step, pin_dir here
 #-----------------------------------------------------------------------
 if BOARD == Board.RASPBERRY_PI:
-    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/serial0"), loglevel=Loglevel.DEBUG)
+    tmc = Tmc2240(None, None, TmcComSpi(0, 0), loglevel=Loglevel.DEBUG)
 elif BOARD == Board.RASPBERRY_PI5:
-    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/ttyAMA0"), loglevel=Loglevel.DEBUG)
+    tmc = Tmc2240(None, None, TmcComSpi(0, 0), loglevel=Loglevel.DEBUG)
 elif BOARD == Board.NVIDIA_JETSON:
-    tmc = Tmc2209(TmcEnableControlPin(13), TmcMotionControlStepDir(6, 5), TmcComUart("/dev/ttyTHS1"), loglevel=Loglevel.DEBUG)
+    tmc = Tmc2240(None, None, TmcComSpi(0, 0), loglevel=Loglevel.DEBUG)
 else:
     # just in case
-    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/serial0"), loglevel=Loglevel.DEBUG)
-
-
-
-
+    tmc = Tmc2240(None, None, TmcComSpi(0, 0), loglevel=Loglevel.DEBUG)
 
 
 #-----------------------------------------------------------------------
@@ -56,7 +52,6 @@ tmc.set_current(300)
 tmc.set_interpolation(True)
 tmc.set_spreadcycle(False)
 tmc.set_microstepping_resolution(2)
-tmc.set_internal_rsense(False)
 
 
 print("---\n---")
@@ -75,55 +70,22 @@ tmc.read_gconf()
 
 print("---\n---")
 
+# you can either read the register like this:
+# unfortunately you need to know the names of the register for this method
+# because they are generated at runtime and therefore not available in the IDE as a suggestion
+tmc.adcv_supply_ain.read()
+tmc.adcv_supply_ain.log(tmc.tmc_logger)
 
-
-
-
-
-
-#-----------------------------------------------------------------------
-# set the max Speed and Speed in fullsteps
-#-----------------------------------------------------------------------
-tmc.tmc_mc.max_speed_fullstep = 200
-tmc.tmc_mc.speed_fullstep = 100
-
-
-
-
-
-
-
-#-----------------------------------------------------------------------
-# activate the motor current output
-#-----------------------------------------------------------------------
-tmc.set_motor_enabled(True)
-
-
-
-
-
-#-----------------------------------------------------------------------
-# move the motor 4 seconds
-#-----------------------------------------------------------------------
-time_start = time.time()
-
-while time.time() < time_start + 4:
-    tmc.tmc_mc.run_speed()
-
-
-
-
-
-
-#-----------------------------------------------------------------------
-# deactivate the motor current output
-#-----------------------------------------------------------------------
-tmc.set_motor_enabled(False)
+tmc.adc_temp.read()
+tmc.adc_temp.log(tmc.tmc_logger)
 
 print("---\n---")
 
+# or use the wrapper functions in the Tmc2240 class
+print(f"Temperature:\t{tmc.get_temperature()} °C")
+print(f"VSupply:\t{tmc.get_vsupply()} V")
 
-
+print("---\n---")
 
 
 #-----------------------------------------------------------------------

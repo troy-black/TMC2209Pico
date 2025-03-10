@@ -4,9 +4,9 @@ test file for testing basic movement
 
 import time
 try:
-    from src.tmc_driver.tmc_2209 import *
+    from src.tmc_driver.tmc_2240 import *
 except ModuleNotFoundError:
-    from tmc_driver.tmc_2209 import *
+    from tmc_driver.tmc_2240 import *
 
 
 print("---")
@@ -22,14 +22,14 @@ print("---")
 # use your pins for pin_en, pin_step, pin_dir here
 #-----------------------------------------------------------------------
 if BOARD == Board.RASPBERRY_PI:
-    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/serial0"), loglevel=Loglevel.DEBUG)
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
 elif BOARD == Board.RASPBERRY_PI5:
-    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/ttyAMA0"), loglevel=Loglevel.DEBUG)
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
 elif BOARD == Board.NVIDIA_JETSON:
-    tmc = Tmc2209(TmcEnableControlPin(13), TmcMotionControlStepDir(6, 5), TmcComUart("/dev/ttyTHS1"), loglevel=Loglevel.DEBUG)
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
 else:
     # just in case
-    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/serial0"), loglevel=Loglevel.DEBUG)
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
 
 
 
@@ -56,7 +56,7 @@ tmc.set_current(300)
 tmc.set_interpolation(True)
 tmc.set_spreadcycle(False)
 tmc.set_microstepping_resolution(2)
-tmc.set_internal_rsense(False)
+tmc.set_toff(5)
 
 
 print("---\n---")
@@ -101,8 +101,9 @@ tmc.max_speed_fullstep = 250
 # activate the motor current output
 #-----------------------------------------------------------------------
 tmc.set_motor_enabled(True)
-
-
+print("BEFORE MOVEMENT")
+print(f"Temperature:\t{tmc.get_temperature()} °C")
+print(f"VSupply:\t{tmc.get_vsupply()} V")
 
 
 
@@ -123,11 +124,12 @@ tmc.run_to_position_revolutions(0)                              #move 1 revoluti
 
 
 
-
-
 #-----------------------------------------------------------------------
 # deactivate the motor current output
 #-----------------------------------------------------------------------
+print("AFTER MOVEMENT")
+print(f"Temperature:\t{tmc.get_temperature()} °C")
+print(f"VSupply:\t{tmc.get_vsupply()} V")
 tmc.set_motor_enabled(False)
 
 print("---\n---")

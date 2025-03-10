@@ -1,5 +1,21 @@
 # Changelog
 
+## version 0.7
+
+- added Support for TMC2240
+- changed registers to be initialized as Lists (Bitmasks and Bitpositions)
+- added Support for SPI
+- Split code for EnableControl and MotionControl into their own classes
+- added Classes for EnableControl
+  - TmcEnableControlPin
+  - TmcEnableControlToff
+- added Classes for MotionControl
+  - TmcMotionControlStepDir
+  - TmcMotionControlStepReg
+  - TmcMotionControlVActual
+- added support for coolstep
+- changed library name to PyTmcStepper
+
 ## version 0.6
 
 - refactored deserialisation and serialisation of register values to use classes

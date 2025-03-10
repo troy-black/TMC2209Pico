@@ -1,13 +1,13 @@
-# TMC_2209_Raspberry_Pi
+# PyTmcStepper
 
-[![PyPI python version TMC-2209-Raspberry-Pi](https://badgen.net/pypi/python/TMC-2209-Raspberry-Pi)](https://pypi.org/project/TMC-2209-Raspberry-Pi)
-[![PyPI version TMC-2209-Raspberry-Pi](https://badgen.net/pypi/v/TMC-2209-Raspberry-Pi)](https://pypi.org/project/TMC-2209-Raspberry-Pi)
-[![PyPI downloads TMC-2209-Raspberry-Pi](https://img.shields.io/pypi/dm/TMC-2209-Raspberry-Pi)](https://pypi.org/project/TMC-2209-Raspberry-Pi)
-[![GitHub issues](https://img.shields.io/github/issues/Chr157i4n/TMC2209_Raspberry_Pi.svg)](https://GitHub.com/Chr157i4n/TMC2209_Raspberry_Pi/issues/)
+[![PyPI python version PyTmcStepper](https://badgen.net/pypi/python/PyTmcStepper)](https://pypi.org/project/PyTmcStepper)
+[![PyPI version PyTmcStepper](https://badgen.net/pypi/v/PyTmcStepper)](https://pypi.org/project/PyTmcStepper)
+[![PyPI downloads PyTmcStepper](https://img.shields.io/pypi/dm/PyTmcStepper)](https://pypi.org/project/PyTmcStepper)
+[![GitHub issues](https://img.shields.io/github/issues/Chr157i4n/PyTmcStepper.svg)](https://GitHub.com/Chr157i4n/PyTmcStepper/issues/)
 
 \
 \
-This is a library to drive a stepper motor with a TMC2209 stepper driver and a Raspberry Pi.
+This is a Python libary to drive a stepper motor with a Trinamic stepper driver and a single board computer like a Raspberry Pi.
 
 This code is still experimental, so use it on your own risk.
 
@@ -26,14 +26,14 @@ Well, the Pi receives 4 bytes from itself and 8 bytes from the driver. So the Pi
 The Documentation of the TMC2209 can be found here:
 [TMC2209 - Datsheet](https://www.analog.com/media/en/technical-documentation/data-sheets/TMC2209_datasheet_rev1.09.pdf)
 
-The code is also available on [PyPI](https://pypi.org/project/TMC-2209-Raspberry-Pi).
+The code is also available on [PyPI](https://pypi.org/project/PyTmcStepper).
 
 ## Installation
 
 ### Installation with PIP
 
 ```shell
-pip3 install TMC-2209-Raspberry-Pi
+pip3 install PyTmcStepper
 ```
 
 ### Installation with GIT
@@ -41,7 +41,7 @@ pip3 install TMC-2209-Raspberry-Pi
 - clone this repo to your Raspberry Pi using
 
     ```shell
-    git clone https://github.com/Chr157i4n/TMC2209_Raspberry_Pi
+    git clone https://github.com/Chr157i4n/PyTmcStepper
     ```
 
 - install the required modules
@@ -73,28 +73,85 @@ Those libraries are needed for this library to work. You can either install the 
 You can also install the needed GPIO library by specifing the Installation Parameter while installing this library:
 
 ```shell
-pip3 install TMC-2209-Raspberry-Pi[RASPBERRY_PI]
+pip3 install PyTmcStepper[RASPBERRY_PI]
 ```
+
+## Driver Support
+
+The currently supported drivers are:
+
+Driver  | Interface
+--      | --
+TMC2208 | UART
+TMC2209 | UART
+TMC2240 | SPI/UART
+
+## Submodules
+
+with V0.7 the code for enabling the motor current output and the code for controling the motion of the drivers
+is split into their own classes to be able to support the diverse methods.
+
+### EnableControl
+
+EnableControl   | Class                 | Driver    | Notes
+--              | --                    | --        | --
+Pin             | TmcEnableControlPin   | all       | the EN Pin of the Driver needs to be connected to a GPIO of the Pi
+TOff            | TmcEnableControlToff  | all       | the EN Pin needs to be connected to GND.<br />On the TMC2209 this enables current Output on Startup!<br />On the TMC2240 this works fine, because TOff is per default 0 (off).
+
+### MotionControl
+
+MotionControl   | Class                     | Driver    | Notes
+--              | --                        | --        | --
+STEP/DIR        | TmcMotionControlStepDir   | all       | the STEP and DIR pin of the driver must each be connected to a GPIO of the Pi
+STEP/REG        | TmcMotionControlStepReg   | all       | only the STEP pin needs to be connected to a GPIO of the Pi.<br />The direction is controlled via the Register.
+VACTUAL         | TmcMotionControlVActual   | TMC220x   | the Direction and Speed is controlled via Register. But VActual does only allow setting a speed and therefore cannot control positioning of the Motor.
+
+Further methods of controlling a motor could be:
+
+- using the built in Motion Controller of the TMC5130
+- via a µC which controlls the Motor
+- highperformance Step/Dir Library written in a compiled language (C/C++)
+
+### Com
+
+Com     | Class         | Driver    | Notes
+--      | --            | --        | --
+UART    | TmcComUart    | all       | Communication via UART (RX, TX). See [Wiring](#uart)<br />[pyserial](https://pypi.org/project/pyserial) needs to be installed
+SPI     | TmcComSpi     | TMC2240   | Communication via SPI (MOSI, MISO, CLK, CS). See [Wiring](#spi)<br />[spidev](https://pypi.org/project/spidev) needs to be installed
 
 ## Wiring
 
-Pin TMC2209 | connect to | Function
--- | -- | --
-TX or PDN_UART with 1kOhm | TX of Raspberry Pi | send data to TMC via UART
-RX or PDN_UART directly | RX of Raspberry Pi | receive data from TMC via UART
-VDD | 3,3V of Raspberry Pi | optional, for more stable logic voltage
-GND | GND of Raspberry Pi | GND for VDD and Signals
-VM | 12V or 24V of power supply | power for the motor
-GND | GND of power supply | power for the motor
-EN | GPIO21 of Raspberry Pi | enable the motor output
-STEP | GPIO16 of Raspberry Pi | moves the motor one step per pulse
-DIR | GPIO20 of Raspberry Pi | set the direction of the motor
-DIAG | GPIO26 of Raspberry Pi | optional, for StallGuard
-
 ![wiring diagram](docs/images/wiring_diagram.png)
+
+Pin TMC | Color     | connect to                    | Function
+--      | --        | --                            | --
+VDD     |           | 3,3V of Raspberry Pi          | recommended, for forcing the TMC to use 3,3V logic level
+GND     | BLACK     | GND of Raspberry Pi           | GND for VDD and Signals
+VM      | RED       | 12V or 24V of power supply    | power for the motor
+GND     | BLACK     | GND of power supply           | power for the motor
+EN      | RED       |GPIO21 of Raspberry Pi         | enable the motor output
+STEP    | GREEN     |GPIO16 of Raspberry Pi         | moves the motor one step per pulse
+DIR     | WHITE     |GPIO20 of Raspberry Pi         | set the direction of the motor
+DIAG    | ORANGE | GPIO26 of Raspberry Pi           | optional, for StallGuard
 
 The GPIO pins can be specific when initiating the class.
 If you test this on a breadboard, make sure to cut off the bottomside of the pins (Vref and DIAG) next to the EN pin, so that they are not shorted trough the breadboard.
+
+### UART
+
+Pin TMC                     | Color     | connect to            | Function
+--                          | --        | --                    | --
+TX or PDN_UART with 1kOhm   | YELLOW    | TX of Raspberry Pi    | send data to TMC via UART
+RX or PDN_UART directly     | YELLOW    | RX of Raspberry Pi    | receive data from TMC via UART
+
+### SPI
+
+Pin TMC | Color | connect to                        | Function
+--      | --    | --                                | --
+MOSI    |       | MOSI                              | Data from Pi to TMC
+MISO    |       | MOSI                              | Data from TMC to Pi
+SPI-CLK |       | CLK                               | Clock for SPI
+CS      |       | SPI CE0 (for the demo scripts)    | Chipselect (2nd parameter of TmcComSpi "spi_dev")
 
 ## Demo scripts
 
@@ -159,7 +216,7 @@ So you don't need to connect anything to the Vio pin of the driver.
 
 ```python
 from tmc_driver.tmc_2209 import *
-tmc = Tmc2209(21, 16, 20, TmcUart("/dev/serial0"))
+tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/serial0"))
 
 tmc.set_direction_reg(False)
 tmc.set_current(300)
@@ -181,7 +238,7 @@ tmc.set_motor_enabled(False)
 
 ## Troubleshoot
 
-If you have questions please check out the [Wiki](https://github.com/Chr157i4n/TMC2209_Raspberry_Pi/wiki) and the other issues.
+If you have questions please check out the [Wiki](https://github.com/Chr157i4n/PyTmcStepper/wiki) and the other issues.
 
 If you encounter any problems, feel free to open an issue (ENG/GER).
 Please don't send any E-Mails to me. Pls use Github, so that i don't need to answer the same question multiple times.
@@ -210,6 +267,6 @@ The main focus for this are Test setups, as Python is not fast enough for high m
 
 ## Feedback/Contributing
 
-If you encounter any problem, feel free to open an issue on the Github [issue page](https://github.com/Chr157i4n/TMC2209_Raspberry_Pi/issues).
+If you encounter any problem, feel free to open an issue on the Github [issue page](https://github.com/Chr157i4n/PyTmcStepper/issues).
 Feedback will keep this project growing and I encourage all suggestions.
 Feel free to submit a pull request on the dev branch.

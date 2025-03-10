@@ -1,43 +1,26 @@
 #pylint: disable=import-error
 #pylint: disable=broad-exception-caught
+#pylint: disable=wildcard-import
+#pylint: disable=unused-wildcard-import
 """
-TmcUart stepper driver uart module
+TmcComUart stepper driver uart module
 """
 
-import time
-import struct
-from typing import List
+import sys
 import serial
-from .reg._tmc_220x_reg_addr import TmcRegAddr
-from .reg._tmc_gstat import GStat
-from ._tmc_logger import TmcLogger, Loglevel
+from ._tmc_com import *
 
 
-class TmcUart:
-    """TmcUart
+
+class TmcComUart(TmcCom):
+    """TmcComUart
 
     this class is used to communicate with the TMC via UART
     it can be used to change the settings of the TMC.
     like the current or the microsteppingmode
     """
-    _tmc_logger:TmcLogger = None
 
-    mtr_id:int = 0
-    ser:serial.Serial = None
-    r_frame:List[int] = [0x55, 0, 0, 0  ]
-    w_frame:List[int] = [0x55, 0, 0, 0 , 0, 0, 0, 0 ]
-    communication_pause:int = 0
-    error_handler_running:bool = False
-
-    @property
-    def tmc_logger(self) -> TmcLogger:
-        """get the tmc_logger"""
-        return self._tmc_logger
-
-    @tmc_logger.setter
-    def tmc_logger(self, tmc_logger:TmcLogger):
-        """set the tmc_logger"""
-        self._tmc_logger = tmc_logger
+    ser:serial.Serial = serial.Serial()
 
 
     def __init__(self,
@@ -54,25 +37,38 @@ class TmcUart:
             baudrate (int): baudrate
             mtr_id (int, optional): driver address [0-3]. Defaults to 0.
         """
-        self._tmc_logger = tmc_logger
+        super().__init__(mtr_id, tmc_logger)
+
         if serialport is None:
             return
+
+        self.ser.port = serialport
+        self.ser.baudrate = baudrate
+
+        self.r_frame = [0x55, 0, 0, 0  ]
+        self.w_frame = [0x55, 0, 0, 0 , 0, 0, 0, 0 ]
+
+
+    def init(self):
+        """init"""
         try:
-            self.ser = serial.Serial(serialport, baudrate)
+            self.ser.open()
         except Exception as e:
             errnum = e.args[0]
             self._tmc_logger.log(f"SERIAL ERROR: {e}")
             if errnum == 2:
-                self._tmc_logger.log(f""""{serialport} does not exist.
-                      You need to activate the serial port with \"sudo raspi-config\"""")
+                self._tmc_logger.log(f""""{self.ser.serialport} does not exist.
+                      You need to activate the serial port with \"sudo raspi-config\"""", Loglevel.ERROR)
+                sys.exit()
+
             if errnum == 13:
                 self._tmc_logger.log("""you have no permission to use the serial port.
                                     You may need to add your user to the dialout group
-                                    with \"sudo usermod -a -G dialout pi\"""")
+                                    with \"sudo usermod -a -G dialout pi\"""", Loglevel.ERROR)
+                sys.exit()
 
-        self.mtr_id = mtr_id
         # adjust per baud and hardware. Sequential reads without some delay fail.
-        self.communication_pause = 500 / baudrate
+        self.communication_pause = 500 / self.ser.baudrate
 
         if self.ser is None:
             return
@@ -82,11 +78,10 @@ class TmcUart:
         self.ser.STOPBITS = 1
 
         # adjust per baud and hardware. Sequential reads without some delay fail.
-        self.ser.timeout = 20000/baudrate
+        self.ser.timeout = 20000/self.ser.baudrate
 
         self.ser.reset_output_buffer()
         self.ser.reset_input_buffer()
-
 
 
     def __del__(self):
@@ -95,30 +90,7 @@ class TmcUart:
             self.ser.close()
 
 
-
-    def compute_crc8_atm(self, datagram, initial_value=0):
-        """this function calculates the crc8 parity bit
-
-        Args:
-            datagram (list): datagram
-            initial_value (int): initial value (Default value = 0)
-        """
-        crc = initial_value
-        # Iterate bytes in data
-        for byte in datagram:
-            # Iterate bits in byte
-            for _ in range(0, 8):
-                if (crc >> 7) ^ (byte & 0x01):
-                    crc = ((crc << 1) ^ 0x07) & 0xFF
-                else:
-                    crc = (crc << 1) & 0xFF
-                # Shift to next bit
-                byte = byte >> 1
-        return crc
-
-
-
-    def read_reg(self, register:TmcRegAddr):
+    def read_reg(self, addr:hex):
         """reads the registry on the TMC with a given address.
         returns the binary value of that register
 
@@ -133,8 +105,8 @@ class TmcUart:
         self.ser.reset_input_buffer()
 
         self.r_frame[1] = self.mtr_id
-        self.r_frame[2] = register.value
-        self.r_frame[3] = self.compute_crc8_atm(self.r_frame[:-1])
+        self.r_frame[2] = addr
+        self.r_frame[3] = compute_crc8_atm(self.r_frame[:-1])
 
         rtn = self.ser.write(self.r_frame)
         if rtn != len(self.r_frame):
@@ -153,13 +125,12 @@ class TmcUart:
         return rtn
 
 
-
-    def read_int(self, register:TmcRegAddr, tries:int = 10):
+    def read_int(self, addr:hex, tries:int = 10):
         """this function tries to read the registry of the TMC 10 times
         if a valid answer is returned, this function returns it as an integer
 
         Args:
-            register (int): HEX, which register to read
+            addr (int): HEX, which register to read
             tries (int): how many tries, before error is raised (Default value = 10)
         """
         if self.ser is None:
@@ -167,7 +138,7 @@ class TmcUart:
             return -1
         while True:
             tries -= 1
-            rtn = self.read_reg(register)
+            rtn = self.read_reg(addr)
             rtn_data = rtn[7:11]
             not_zero_count = len([elem for elem in rtn if elem != 0])
 
@@ -175,7 +146,7 @@ class TmcUart:
                 self._tmc_logger.log(f"""UART Communication Error:
                                     {len(rtn_data)} data bytes |
                                     {len(rtn)} total bytes""", Loglevel.ERROR)
-            elif rtn[11] != self.compute_crc8_atm(rtn[4:11]):
+            elif rtn[11] != compute_crc8_atm(rtn[4:11]):
                 self._tmc_logger.log("UART Communication Error: CRC MISMATCH", Loglevel.ERROR)
             else:
                 break
@@ -191,15 +162,14 @@ class TmcUart:
         return val
 
 
-
-    def write_reg(self, register:TmcRegAddr, val:int):
+    def write_reg(self, addr:hex, val:int):
         """this function can write a value to the register of the tmc
         1. use read_int to get the current setting of the TMC
         2. then modify the settings as wished
         3. write them back to the driver with this function
 
         Args:
-            register (int): HEX, which register to write
+            addr (int): HEX, which register to write
             val (int): value for that register
         """
         if self.ser is None:
@@ -210,14 +180,14 @@ class TmcUart:
         self.ser.reset_input_buffer()
 
         self.w_frame[1] = self.mtr_id
-        self.w_frame[2] =  register.value | 0x80  # set write bit
+        self.w_frame[2] = addr | 0x80  # set write bit
 
         self.w_frame[3] = 0xFF & (val>>24)
         self.w_frame[4] = 0xFF & (val>>16)
         self.w_frame[5] = 0xFF & (val>>8)
         self.w_frame[6] = 0xFF & val
 
-        self.w_frame[7] = self.compute_crc8_atm(self.w_frame[:-1])
+        self.w_frame[7] = compute_crc8_atm(self.w_frame[:-1])
 
 
         rtn = self.ser.write(self.w_frame)
@@ -230,29 +200,30 @@ class TmcUart:
         return True
 
 
-
-    def write_reg_check(self, register:TmcRegAddr, val:int, tries:int=10):
+    def write_reg_check(self, addr:hex, val:int, tries:int=10):
         """this function als writes a value to the register of the TMC
         but it also checks if the writing process was successfully by checking
         the InterfaceTransmissionCounter before and after writing
 
         Args:
-            register: HEX, which register to write
+            addr: HEX, which register to write
             val: value for that register
             tries: how many tries, before error is raised (Default value = 10)
         """
         if self.ser is None:
             self._tmc_logger.log("Cannot write reg check, serial is not initialized", Loglevel.ERROR)
             return False
-        ifcnt1 = self.read_int(TmcRegAddr.IFCNT)
+        self._tmc_registers["ifcnt"].read()
+        ifcnt1 = self._tmc_registers["ifcnt"].ifcnt
 
         if ifcnt1 == 255:
             ifcnt1 = -1
 
         while True:
-            self.write_reg(register, val)
+            self.write_reg(addr, val)
             tries -= 1
-            ifcnt2 = self.read_int(TmcRegAddr.IFCNT)
+            self._tmc_registers["ifcnt"].read()
+            ifcnt2 = self._tmc_registers["ifcnt"].ifcnt
             if ifcnt1 >= ifcnt2:
                 self._tmc_logger.log("writing not successful!", Loglevel.ERROR)
                 self._tmc_logger.log(f"ifcnt: {ifcnt1}, {ifcnt2}", Loglevel.DEBUG)
@@ -264,7 +235,6 @@ class TmcUart:
                 return -1
 
 
-
     def flush_serial_buffer(self):
         """this function clear the communication buffers of the Raspberry Pi"""
         if self.ser is None:
@@ -273,41 +243,24 @@ class TmcUart:
         self.ser.reset_input_buffer()
 
 
-
     def handle_error(self):
         """error handling"""
         if self.error_handler_running:
             return
         self.error_handler_running = True
-        gstat = self.read_int(TmcRegAddr.GSTAT)
-        self._tmc_logger.log("GSTAT Error check:", Loglevel.DEBUG)
-        if gstat == -1:
-            self._tmc_logger.log("No answer from Driver", Loglevel.DEBUG)
-        elif gstat == 0:
-            self._tmc_logger.log("Everything looks fine in GSTAT", Loglevel.DEBUG)
-        else:
-            gstat = GStat(gstat)
-            if gstat.reset:
-                self._tmc_logger.log("The Driver has been reset since the last read access to GSTAT",
-                                    Loglevel.DEBUG)
-            if gstat.drv_err:
-                self._tmc_logger.log("""The driver has been shut down due to overtemperature or short
-                      circuit detection since the last read access""", Loglevel.DEBUG)
-            if gstat.uv_cp:
-                self._tmc_logger.log("""Undervoltage on the charge pump.
-                      The driver is disabled in this case""", Loglevel.DEBUG)
+        self._tmc_registers["gstat"].read()
+        self._tmc_registers["gstat"].log(self.tmc_logger)
+
         self._tmc_logger.log("EXITING!", Loglevel.INFO)
         raise SystemExit
 
 
-
-    def test_com(self, register:TmcRegAddr):
+    def test_com(self, addr):
         """test UART connection
 
         Args:
-            register (int):  HEX, which register to read
+            addr (int):  HEX, which register to test
         """
-
         if self.ser is None:
             self._tmc_logger.log("Cannot test UART, serial is not initialized", Loglevel.ERROR)
             return False
@@ -316,16 +269,16 @@ class TmcUart:
         self.ser.reset_input_buffer()
 
         self.r_frame[1] = self.mtr_id
-        self.r_frame[2] = register.value
-        self.r_frame[3] = self.compute_crc8_atm(self.r_frame[:-1])
+        self.r_frame[2] = addr
+        self.r_frame[3] = compute_crc8_atm(self.r_frame[:-1])
 
         rtn = self.ser.write(self.r_frame)
         if rtn != len(self.r_frame):
             self._tmc_logger.log("Err in write", Loglevel.ERROR)
             return False
 
-        # adjust per baud and hardware. Sequential reads without some delay fail.
-        time.sleep(self.communication_pause)
+
+        snd = bytes(self.r_frame)
 
         rtn = self.ser.read(12)
         self._tmc_logger.log(f"received {len(rtn)} bytes; {len(rtn)*8} bits", Loglevel.DEBUG)
@@ -333,6 +286,51 @@ class TmcUart:
         rtn_bin = format(int(rtn.hex(),16), f"0>{len(rtn)*8}b")
         self._tmc_logger.log(f"bin: {rtn_bin}", Loglevel.DEBUG)
 
-        time.sleep(self.communication_pause)
 
-        return bytes(self.r_frame), rtn
+        self.tmc_logger.log(f"length snd: {len(snd)}", Loglevel.DEBUG)
+        self.tmc_logger.log(f"length rtn: {len(rtn)}", Loglevel.DEBUG)
+
+
+        self.tmc_logger.log("complete messages:", Loglevel.DEBUG)
+        self.tmc_logger.log(str(snd.hex()), Loglevel.DEBUG)
+        self.tmc_logger.log(str(rtn.hex()), Loglevel.DEBUG)
+
+        self.tmc_logger.log("just the first 4 bytes:", Loglevel.DEBUG)
+        self.tmc_logger.log(str(snd[0:4].hex()), Loglevel.DEBUG)
+        self.tmc_logger.log(str(rtn[0:4].hex()), Loglevel.DEBUG)
+
+        status = True
+
+        if len(rtn)==12:
+            self.tmc_logger.log("""the Raspberry Pi received the sent
+                                bytes and the answer from the TMC""", Loglevel.DEBUG)
+        elif len(rtn)==4:
+            self.tmc_logger.log("the Raspberry Pi received only the sent bytes",
+                                Loglevel.ERROR)
+            status = False
+        elif len(rtn)==0:
+            self.tmc_logger.log("the Raspberry Pi did not receive anything",
+                                Loglevel.ERROR)
+            status = False
+        else:
+            self.tmc_logger.log(f"the Raspberry Pi received an unexpected amount of bytes: {len(rtn)}",
+                                Loglevel.ERROR)
+            status = False
+
+        if snd[0:4] == rtn[0:4]:
+            self.tmc_logger.log("""the Raspberry Pi received exactly the bytes it has send.
+                        the first 4 bytes are the same""", Loglevel.DEBUG)
+        else:
+            self.tmc_logger.log("""the Raspberry Pi did not received the bytes it has send.
+                        the first 4 bytes are different""", Loglevel.DEBUG)
+            status = False
+
+        self.tmc_logger.log("---")
+        if status:
+            self.tmc_logger.log("UART connection: OK", Loglevel.INFO)
+        else:
+            self.tmc_logger.log("UART connection: not OK", Loglevel.ERROR)
+
+        self.tmc_logger.log("---")
+
+        return status
