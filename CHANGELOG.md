@@ -13,6 +13,7 @@
   - TmcMotionControlStepDir
   - TmcMotionControlStepReg
   - TmcMotionControlVActual
+- added support for coolstep
 
 ## version 0.6
 
