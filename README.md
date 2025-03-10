@@ -125,7 +125,7 @@ SPI     | TmcComSpi     | TMC2240   | Communication via SPI (MOSI, MISO, CLK, CS
 
 Pin TMC | Color     | connect to                    | Function
 --      | --        | --                            | --
-VDD     |           | 3,3V of Raspberry Pi          | optional, for more stable logic voltage
+VDD     |           | 3,3V of Raspberry Pi          | recommended, for forcing the TMC to use 3,3V logic level
 GND     | BLACK     | GND of Raspberry Pi           | GND for VDD and Signals
 VM      | RED       | 12V or 24V of power supply    | power for the motor
 GND     | BLACK     | GND of power supply           | power for the motor
