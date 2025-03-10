@@ -14,6 +14,7 @@
   - TmcMotionControlStepReg
   - TmcMotionControlVActual
 - added support for coolstep
+- changed library name to PyTmcStepper
 
 ## version 0.6
 

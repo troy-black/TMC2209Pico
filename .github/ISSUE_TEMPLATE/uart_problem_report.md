@@ -9,10 +9,10 @@ assignees: ''
 
 **Describe the bug**
 A clear and concise description of what the bug is.
-Please check out the [Troubleshoot section](https://github.com/Chr157i4n/TMC2209_Raspberry_Pi#troubleshoot) first.
+Please check out the [Troubleshoot section](https://github.com/Chr157i4n/PyTmcStepper#troubleshoot) first.
 
 ```
-Include the output of the [demo/debug_script_01_uart_connection.py](https://github.com/Chr157i4n/TMC2209_Raspberry_Pi/blob/main/demo/debug_script_01_uart_connection.py) script in your issure report here using [Markdown Code-Blocks](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-and-highlighting-code-blocks).
+Include the output of the [demo/debug_script_01_uart_connection.py](https://github.com/Chr157i4n/PyTmcStepper/blob/main/demo/debug_script_01_uart_connection.py) script in your issure report here using [Markdown Code-Blocks](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-and-highlighting-code-blocks).
 ```
 
 **To Reproduce**

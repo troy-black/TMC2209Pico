@@ -1,13 +1,13 @@
-# TMC_2209_Raspberry_Pi
+# PyTmcStepper
 
-[![PyPI python version TMC-2209-Raspberry-Pi](https://badgen.net/pypi/python/TMC-2209-Raspberry-Pi)](https://pypi.org/project/TMC-2209-Raspberry-Pi)
-[![PyPI version TMC-2209-Raspberry-Pi](https://badgen.net/pypi/v/TMC-2209-Raspberry-Pi)](https://pypi.org/project/TMC-2209-Raspberry-Pi)
-[![PyPI downloads TMC-2209-Raspberry-Pi](https://img.shields.io/pypi/dm/TMC-2209-Raspberry-Pi)](https://pypi.org/project/TMC-2209-Raspberry-Pi)
-[![GitHub issues](https://img.shields.io/github/issues/Chr157i4n/TMC2209_Raspberry_Pi.svg)](https://GitHub.com/Chr157i4n/TMC2209_Raspberry_Pi/issues/)
+[![PyPI python version PyTmcStepper](https://badgen.net/pypi/python/PyTmcStepper)](https://pypi.org/project/PyTmcStepper)
+[![PyPI version PyTmcStepper](https://badgen.net/pypi/v/PyTmcStepper)](https://pypi.org/project/PyTmcStepper)
+[![PyPI downloads PyTmcStepper](https://img.shields.io/pypi/dm/PyTmcStepper)](https://pypi.org/project/PyTmcStepper)
+[![GitHub issues](https://img.shields.io/github/issues/Chr157i4n/PyTmcStepper.svg)](https://GitHub.com/Chr157i4n/PyTmcStepper/issues/)
 
 \
 \
-This is a library to drive a stepper motor with a TMC2209 stepper driver and a Raspberry Pi.
+This is a Python libary to drive a stepper motor with a Trinamic stepper driver and a single board computer like a Raspberry Pi.
 
 This code is still experimental, so use it on your own risk.
 
@@ -26,14 +26,14 @@ Well, the Pi receives 4 bytes from itself and 8 bytes from the driver. So the Pi
 The Documentation of the TMC2209 can be found here:
 [TMC2209 - Datsheet](https://www.analog.com/media/en/technical-documentation/data-sheets/TMC2209_datasheet_rev1.09.pdf)
 
-The code is also available on [PyPI](https://pypi.org/project/TMC-2209-Raspberry-Pi).
+The code is also available on [PyPI](https://pypi.org/project/PyTmcStepper).
 
 ## Installation
 
 ### Installation with PIP
 
 ```shell
-pip3 install TMC-2209-Raspberry-Pi
+pip3 install PyTmcStepper
 ```
 
 ### Installation with GIT
@@ -41,7 +41,7 @@ pip3 install TMC-2209-Raspberry-Pi
 - clone this repo to your Raspberry Pi using
 
     ```shell
-    git clone https://github.com/Chr157i4n/TMC2209_Raspberry_Pi
+    git clone https://github.com/Chr157i4n/PyTmcStepper
     ```
 
 - install the required modules
@@ -73,7 +73,7 @@ Those libraries are needed for this library to work. You can either install the 
 You can also install the needed GPIO library by specifing the Installation Parameter while installing this library:
 
 ```shell
-pip3 install TMC-2209-Raspberry-Pi[RASPBERRY_PI]
+pip3 install PyTmcStepper[RASPBERRY_PI]
 ```
 
 ## Driver Support
@@ -238,7 +238,7 @@ tmc.set_motor_enabled(False)
 
 ## Troubleshoot
 
-If you have questions please check out the [Wiki](https://github.com/Chr157i4n/TMC2209_Raspberry_Pi/wiki) and the other issues.
+If you have questions please check out the [Wiki](https://github.com/Chr157i4n/PyTmcStepper/wiki) and the other issues.
 
 If you encounter any problems, feel free to open an issue (ENG/GER).
 Please don't send any E-Mails to me. Pls use Github, so that i don't need to answer the same question multiple times.
@@ -267,6 +267,6 @@ The main focus for this are Test setups, as Python is not fast enough for high m
 
 ## Feedback/Contributing
 
-If you encounter any problem, feel free to open an issue on the Github [issue page](https://github.com/Chr157i4n/TMC2209_Raspberry_Pi/issues).
+If you encounter any problem, feel free to open an issue on the Github [issue page](https://github.com/Chr157i4n/PyTmcStepper/issues).
 Feedback will keep this project growing and I encourage all suggestions.
 Feel free to submit a pull request on the dev branch.
