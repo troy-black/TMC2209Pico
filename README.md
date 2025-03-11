@@ -28,7 +28,7 @@ The Documentation of the TMC2209 can be found here:
 
 The code is also available on [PyPI](https://pypi.org/project/PyTmcStepper).
 
-## Installation
+## Installation (on Raspberry Pi)
 
 ### Installation with PIP
 
@@ -95,16 +95,16 @@ is split into their own classes to be able to support the diverse methods.
 
 EnableControl   | Class                 | Driver    | Notes
 --              | --                    | --        | --
-Pin             | TmcEnableControlPin   | all       | the EN Pin of the Driver needs to be connected to a GPIO of the Pi
-TOff            | TmcEnableControlToff  | all       | the EN Pin needs to be connected to GND.<br />On the TMC2209 this enables current Output on Startup!<br />On the TMC2240 this works fine, because TOff is per default 0 (off).
+Pin             | [TmcEnableControlPin](src/tmc_driver/enable_control/_tmc_ec_pin.py)   | all       | the EN Pin of the Driver needs to be connected to a GPIO of the Pi
+TOff            | [TmcEnableControlToff](src/tmc_driver/enable_control/_tmc_ec_toff.py)  | all       | the EN Pin needs to be connected to GND.<br />On the TMC2209 this enables current Output on Startup!<br />On the TMC2240 this works fine, because TOff is per default 0 (off).
 
 ### MotionControl
 
 MotionControl   | Class                     | Driver    | Notes
 --              | --                        | --        | --
-STEP/DIR        | TmcMotionControlStepDir   | all       | the STEP and DIR pin of the driver must each be connected to a GPIO of the Pi
-STEP/REG        | TmcMotionControlStepReg   | all       | only the STEP pin needs to be connected to a GPIO of the Pi.<br />The direction is controlled via the Register.
-VACTUAL         | TmcMotionControlVActual   | TMC220x   | the Direction and Speed is controlled via Register. But VActual does only allow setting a speed and therefore cannot control positioning of the Motor.
+STEP/DIR        | [TmcMotionControlStepDir](src/tmc_driver/motion_control/_tmc_mc_step_dir.py)  | all       | the STEP and DIR pin of the driver must each be connected to a GPIO of the Pi
+STEP/REG        | [TmcMotionControlStepReg](src/tmc_driver/motion_control/_tmc_mc_step_reg.py)   | all       | only the STEP pin needs to be connected to a GPIO of the Pi.<br />The direction is controlled via the Register.
+VACTUAL         | [TmcMotionControlVActual](src/tmc_driver/motion_control/_tmc_mc_vactual.py)  | TMC220x   | the Direction and Speed is controlled via Register. But VActual does only allow setting a speed and therefore cannot control positioning of the Motor.
 
 Further methods of controlling a motor could be:
 
@@ -116,8 +116,8 @@ Further methods of controlling a motor could be:
 
 Com     | Class         | Driver    | Notes
 --      | --            | --        | --
-UART    | TmcComUart    | all       | Communication via UART (RX, TX). See [Wiring](#uart)<br />[pyserial](https://pypi.org/project/pyserial) needs to be installed
-SPI     | TmcComSpi     | TMC2240   | Communication via SPI (MOSI, MISO, CLK, CS). See [Wiring](#spi)<br />[spidev](https://pypi.org/project/spidev) needs to be installed
+UART    | [TmcComUart](src/tmc_driver/com/_tmc_com_uart.py)    | all       | Communication via UART (RX, TX). See [Wiring](#uart)<br />[pyserial](https://pypi.org/project/pyserial) needs to be installed
+SPI     | [TmcComSpi](src/tmc_driver/com/_tmc_com_spi.py)     | TMC2240   | Communication via SPI (MOSI, MISO, CLK, CS). See [Wiring](#spi)<br />[spidev](https://pypi.org/project/spidev) needs to be installed
 
 ## Wiring
 
@@ -179,23 +179,25 @@ if not, check the connection of the pin.
 
 ### [demo_script_03_basic_movement.py](demo/demo_script_03_basic_movement.py)
 
-This script should move the motor 6 times, one revolution back and forth.
+This script shows the different functions available to move the motors.
+The motor is moved 4 times one revolution back and forth.
 
 ### [demo_script_04_stallguard.py](demo/demo_script_04_stallguard.py)
 
-In this script the stallguard feature of the TMC2209 is beeing setup.
+In this script the stallguard feature of the TMC2209 is being setup.
 A funtion will be called, if the driver detects a stall. The function stops the current movement.
 The motor will be moved 10 revolutions. If the movement is finished unhindered, the script outputs ```Movement finished successfully```.
 If you block the motor with pliers or something similar, the the motor will stop and the script outputs ```StallGuard!``` and ```Movement was not completed```
 
 ### [demo_script_05_vactual.py](demo/demo_script_05_vactual.py)
 
-VACTUAL allows moving the motor by UART control. It gives the motor velocity in +-(2^23)-1 [μsteps / t]
+VACTUAL enables the motor to be moved via the COM interface (UART) without additional GPIOs. The motor speed is transmitted as a value in +-(2^23)-1 [µsteps / t] via the COM interface.
 
 ### [demo_script_06_multiple_drivers.py](demo/demo_script_06_multiple_drivers.py)
 
 Multiple drivers can be addressed via UART by setting different addresses with the MS1 and MS2 pins.
 Simultaneous movement of multiple motors can be done with threaded movement.
+When using SPI different Drivers are accessed via the Chip Select pin.
 
 ### [demo_script_07_threads.py](demo/demo_script_07_threads.py)
 
