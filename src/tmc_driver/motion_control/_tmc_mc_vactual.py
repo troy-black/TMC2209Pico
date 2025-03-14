@@ -72,7 +72,7 @@ class TmcMotionControlVActual(TmcMotionControl):
 
 
     def set_vactual_dur(self, vactual, duration=0, acceleration=0,
-                             show_stallguard_result=False, show_tstep=False):
+                             show_stallguard_result=False, show_tstep=False) -> StopMode:
         """sets the register bit "VACTUAL" to to a given value
         VACTUAL allows moving the motor by UART control.
         It gives the motor velocity in +-(2^23)-1 [μsteps / t]
@@ -140,7 +140,7 @@ class TmcMotionControlVActual(TmcMotionControl):
         return self._stop
 
 
-    def set_vactual_rps(self, rps, duration=0, revolutions=0, acceleration=0):
+    def set_vactual_rps(self, rps, duration=0, revolutions=0, acceleration=0) -> StopMode:
         """converts the rps parameter to a vactual value which represents
         rotation speed in revolutions per second
         With internal oscillator:
@@ -163,7 +163,7 @@ class TmcMotionControlVActual(TmcMotionControl):
         return self.set_vactual_dur(vactual, duration, acceleration=acceleration)
 
 
-    def set_vactual_rpm(self, rpm, duration=0, revolutions=0, acceleration=0):
+    def set_vactual_rpm(self, rpm, duration=0, revolutions=0, acceleration=0) -> StopMode:
         """converts the rps parameter to a vactual value which represents
         rotation speed in revolutions per minute
 

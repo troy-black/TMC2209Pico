@@ -26,6 +26,7 @@ from ._tmc_gpio_board import GpioPUD
 from .motion_control._tmc_mc_step_reg import TmcMotionControlStepReg
 from .enable_control._tmc_ec_toff import TmcEnableControlToff
 from .motion_control._tmc_mc_vactual import TmcMotionControlVActual
+from ._tmc_stallguard import StallGuard
 from ._tmc_logger import TmcLogger, Loglevel
 from .reg._tmc224x_reg import *
 from . import _tmc_math as tmc_math
@@ -34,7 +35,7 @@ from . import _tmc_math as tmc_math
 
 
 
-class Tmc2240(TmcStepperDriver):
+class Tmc2240(TmcStepperDriver, StallGuard):
     """Tmc220X
 
     this class has two different functions:
@@ -47,6 +48,7 @@ class Tmc2240(TmcStepperDriver):
     _pin_stallguard:int = None
     _sg_callback:types.FunctionType = None
     _sg_threshold:int = 100             # threshold for stallguard
+
 
 
 # Constructor/Destructor
@@ -163,7 +165,8 @@ class Tmc2240(TmcStepperDriver):
         self._deinit_finished = True
 
 
-# Tmc220x methods
+
+# Tmc224x methods
 # ----------------------------
     def read_steps_per_rev(self) -> int:
         """returns how many steps are needed for one revolution.
@@ -514,20 +517,6 @@ class Tmc2240(TmcStepperDriver):
 
 
 
-    def set_vactual(self, vactual:int):
-        """sets the register bit "VACTUAL" to to a given value
-        VACTUAL allows moving the motor by UART control.
-        It gives the motor velocity in +-(2^23)-1 [μsteps / t]
-        0: Normal operation. Driver reacts to STEP input
-
-        Args:
-            vactual (int): value for VACTUAL
-        """
-        self.vactual.vactual = vactual
-        self.vactual.write_check()
-
-
-
     def get_microstep_counter(self) -> int:
         """returns the current Microstep counter.
         Indicates actual position in the microstep table for CUR_A
@@ -557,6 +546,28 @@ class Tmc2240(TmcStepperDriver):
 
 
 
+    def get_vsupply(self) -> int:
+        """reads the ADC_VSUPPLY_AIN register
+
+        Returns:
+            int: ADC_VSUPPLY_AIN register value
+        """
+        self.adcv_supply_ain.read()
+        return self.adcv_supply_ain.adc_vsupply_v
+
+
+
+    def get_temperature(self) -> float:
+        """reads the ADC_TEMP register and returns the temperature
+
+        Returns:
+            float: temperature in °C
+        """
+        self.adc_temp.read()
+        return self.adc_temp.adc_temp_c
+
+
+
     def set_stallguard_callback(self, pin_stallguard, threshold, callback,
                                 min_speed = 100):
         """set a function to call back, when the driver detects a stall
@@ -569,98 +580,13 @@ class Tmc2240(TmcStepperDriver):
             callback (func): will be called on StallGuard trigger
             min_speed (int): min speed [steps/s] for StallGuard (Default value = 100)
         """
-        self.tmc_logger.log(f"setup stallguard callback on GPIO {pin_stallguard}", Loglevel.INFO)
-        self.tmc_logger.log(f"StallGuard Threshold: {threshold} | minimum Speed: {min_speed}", Loglevel.INFO)
-
-        self._set_stallguard_threshold(threshold)
-        self._set_coolstep_threshold(tmc_math.steps_to_tstep(min_speed, self.get_microstepping_resolution()))
-        self._sg_callback = callback
-        self._pin_stallguard = pin_stallguard
-
-        tmc_gpio.gpio_setup(self._pin_stallguard, GpioMode.IN, pull_up_down=GpioPUD.PUD_DOWN)
-        # first remove existing events
-        tmc_gpio.gpio_remove_event_detect(self._pin_stallguard)
-        tmc_gpio.gpio_add_event_detect(self._pin_stallguard, self.stallguard_callback)
+        super().set_stallguard_callback(pin_stallguard, threshold, callback, min_speed)
+        self.gconf.modify("diag0_stall", 1)
+        self.gconf.modify("diag0_pushpull", 1)
 
 
-
-    def stallguard_callback(self, gpio_pin):
-        """the callback function for StallGuard.
-        only checks whether the duration of the current movement is longer than
-        _sg_delay and then calls the actual callback
-
-        Args:
-            gpio_pin (int): pin number of the interrupt pin
-        """
-        del gpio_pin
-        if self._sg_callback is None:
-            self.tmc_logger.log("StallGuard callback is None", Loglevel.DEBUG)
-            return
-        self._sg_callback()
-
-
-
-    def _set_coolstep_threshold(self, threshold):
-        """This  is  the  lower  threshold  velocity  for  switching
-        on  smart energy CoolStep and StallGuard to DIAG output. (unsigned)
-
-        Args:
-            threshold (int): threshold velocity for coolstep
-        """
-        self.tcoolthrs.modify("tcoolthrs", threshold)
-
-
-
-    def enable_coolstep(self, semin_sg:int = 150, semax_sg:int = 200, seup:int = 1, sedn:int = 3, min_speed:int = 100):
-        """enables coolstep and sets the parameters for coolstep
-        The values for semin etc. can be tested with the test_stallguard_threshold function
-
-        Args:
-            semin_sg (int): lower threshold. Current will be increased if SG_Result goes below this
-            semax_sg (int): upper threshold. Current will be decreased if SG_Result goes above this
-            seup (int): current increment step
-            sedn (int): number of SG_Result readings for each current decrement
-        """
-        semax_sg = semax_sg - semin_sg
-
-        self.coolconf.read()
-        self.coolconf.semin = round(max(0, min(semin_sg/32, 15)))
-        self.coolconf.semax = round(max(0, min(semax_sg/32, 15)))
-        self.coolconf.seimin = 1        # scale down to until 1/4 of IRun (7 - 31)
-        self.coolconf.seup = seup
-        self.coolconf.sedn = sedn
-        self.coolconf.write_check()
-
-        self._set_coolstep_threshold(tmc_math.steps_to_tstep(min_speed, self.get_microstepping_resolution()))
-
-
-
-    def get_stallguard_result(self):
-        """return the current stallguard result
-        its will be calculated with every fullstep
-        higher values means a lower motor load
-
-        Returns:
-            sg_result (int): StallGuard Result
-        """
-        self.sg_result.read()
-        return self.sg_result.sg_result
-
-
-
-    def _set_stallguard_threshold(self, threshold):
-        """sets the register bit "SGTHRS" to to a given value
-        this is needed for the stallguard interrupt callback
-        SG_RESULT becomes compared to the double of this threshold.
-        SG_RESULT ≤ SGTHRS*2
-
-        Args:
-            threshold (int): value for SGTHRS
-        """
-        self.sg_thrs.modify("sg_thrs", threshold)
-
-
-
+# Test methods
+# ----------------------------
     def test_stallguard_threshold(self, steps):
         """test method for tuning stallguard threshold
 
@@ -670,7 +596,6 @@ class Tmc2240(TmcStepperDriver):
         Args:
             steps (int):
         """
-
         self.tmc_logger.log("---", Loglevel.INFO)
         self.tmc_logger.log("test_stallguard_threshold", Loglevel.INFO)
 
@@ -685,10 +610,9 @@ class Tmc2240(TmcStepperDriver):
 
         while self.tmc_mc.movement_phase != MovementPhase.STANDSTILL:
             self.drvstatus.read()
-            stallguard_result = self.drvstatus.sg_result
+            stallguard_result = self.drvstatus.sgresult
             stallguard_triggered = self.drvstatus.stallguard
             cs_actual = self.drvstatus.cs_actual
-            # stallguard_result = self.get_stallguard_result()
 
             self.tmc_logger.log(f"{self.tmc_mc.movement_phase} | {stallguard_result} | {stallguard_triggered} | {cs_actual}",
                         Loglevel.INFO)
@@ -713,28 +637,6 @@ class Tmc2240(TmcStepperDriver):
         self.tmc_logger.log(f"min StallGuard result during decel: {min_stallguard_result_decel}",
                             Loglevel.INFO)
         self.tmc_logger.log("---", Loglevel.INFO)
-
-
-
-    def get_vsupply(self) -> int:
-        """reads the ADC_VSUPPLY_AIN register
-
-        Returns:
-            int: ADC_VSUPPLY_AIN register value
-        """
-        self.adcv_supply_ain.read()
-        return self.adcv_supply_ain.adc_vsupply_v
-
-
-
-    def get_temperature(self) -> float:
-        """reads the ADC_TEMP register and returns the temperature
-
-        Returns:
-            float: temperature in °C
-        """
-        self.adc_temp.read()
-        return self.adc_temp.adc_temp_c
 
 
 

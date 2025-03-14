@@ -164,7 +164,7 @@ class TmcMotionControlStepDir(TmcMotionControl):
         tmc_gpio.gpio_output(self._pin_dir, direction.value)
 
 
-    def run_to_position_steps(self, steps, movement_abs_rel:MovementAbsRel = None):
+    def run_to_position_steps(self, steps, movement_abs_rel:MovementAbsRel = None) -> StopMode:
         """runs the motor to the given position.
         with acceleration and deceleration
         blocks the code until finished or stopped from a different thread!
@@ -203,7 +203,7 @@ class TmcMotionControlStepDir(TmcMotionControl):
         return self._stop
 
 
-    def run_to_position_revolutions(self, revolutions, movement_abs_rel:MovementAbsRel = None):
+    def run_to_position_revolutions(self, revolutions, movement_abs_rel:MovementAbsRel = None) -> StopMode:
         """runs the motor to the given position.
         with acceleration and deceleration
         blocks the code until finished!
