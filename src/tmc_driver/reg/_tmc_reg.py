@@ -57,9 +57,9 @@ class TmcReg():
         self._data_int = data
 
         for reg in self._reg_map:
-            name, pos, mask, _, _, _ = reg
+            name, pos, mask, reg_class, _, _ = reg
             value = data >> pos & mask
-            setattr(self, name, reg[3](value))
+            setattr(self, name, reg_class(value))
 
 
     def serialise(self) -> int:
