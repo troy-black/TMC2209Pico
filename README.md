@@ -66,7 +66,6 @@ RPi.GPIO    | RASPBERRY_PI              | Pi4, Pi3 etc.
 gpiozero    | RASPBERRY_PI5             | Pi5
 Jetson.GPIO | NVIDIA_JETSON             | Nvidia Jetson
 pheriphery  | LUCKFOX_PICO              | Luckfox Pico
-pheriphery  | LUCKFOX_PICO              | Luckfox Pico
 OPi.GPIO    | ORANGE_PI                 | Orange Pi
 
 Those libraries are needed for this library to work. You can either install the correct library yourself.
