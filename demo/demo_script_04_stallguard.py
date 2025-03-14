@@ -118,18 +118,17 @@ tmc.test_stallguard_threshold(800)
 def my_callback():
     """StallGuard callback"""
     print("StallGuard!")
-    tmc.stop()
+    tmc.tmc_mc.stop()
 
 tmc.set_stallguard_callback(26, 50, my_callback) # after this function call, StallGuard is active
 
 
 #uses STEP/DIR to move the motor
-finishedsuccessfully = tmc.run_to_position_steps(4000, MovementAbsRel.RELATIVE)
+result = tmc.run_to_position_steps(4000, MovementAbsRel.RELATIVE)
 #uses VActual Register to  move the motor
-# finishedsuccessfully = tmc.set_vactual_rpm(30, revolutions=10)
+# result = tmc.set_vactual_rpm(30, revolutions=10)
 
-
-if finishedsuccessfully is True:
+if result is StopMode.NO:
     print("Movement finished successfully")
 else:
     print("Movement was not completed")

@@ -45,6 +45,7 @@ class Tmc220x(TmcStepperDriver):
     tmc_com:TmcComUart = None
 
 
+
 # Constructor/Destructor
 # ----------------------------
     def __init__(self,
@@ -149,6 +150,7 @@ class Tmc220x(TmcStepperDriver):
     def set_deinitialize_true(self):
         """set deinitialize to true"""
         self._deinit_finished = True
+
 
 
 # Tmc220x methods
@@ -622,6 +624,8 @@ class Tmc220x(TmcStepperDriver):
 
 
 
+# Test methods
+# ----------------------------
     def test_pin(self, pin, ioin_reg_bp):
         """tests one pin
 

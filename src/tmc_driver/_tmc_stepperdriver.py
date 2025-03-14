@@ -253,20 +253,21 @@ class TmcStepperDriver:
             self.tmc_mc.acceleration_fullstep = acceleration_fullstep
 
 
-    def run_to_position_steps(self, steps, movement_abs_rel:MovementAbsRel = None):
+    def run_to_position_steps(self, steps, movement_abs_rel:MovementAbsRel = None) -> StopMode:
         """motioncontrol wrapper"""
         if self.tmc_mc is not None:
-            self.tmc_mc.run_to_position_steps(steps, movement_abs_rel)
+            return self.tmc_mc.run_to_position_steps(steps, movement_abs_rel)
+        return None
 
 
-    def run_to_position_fullsteps(self, steps, movement_abs_rel:MovementAbsRel = None):
+    def run_to_position_fullsteps(self, steps, movement_abs_rel:MovementAbsRel = None) -> StopMode:
         """motioncontrol wrapper"""
-        self.run_to_position_steps(steps * self.mres, movement_abs_rel)
+        return self.run_to_position_steps(steps * self.mres, movement_abs_rel)
 
 
-    def run_to_position_revolutions(self, revs, movement_abs_rel:MovementAbsRel = None):
+    def run_to_position_revolutions(self, revs, movement_abs_rel:MovementAbsRel = None) -> StopMode:
         """motioncontrol wrapper"""
-        self.run_to_position_steps(revs * self.steps_per_rev, movement_abs_rel)
+        return self.run_to_position_steps(revs * self.steps_per_rev, movement_abs_rel)
 
 
 # StepperDriver methods

@@ -294,7 +294,7 @@ class DrvStatus(TmcReg):
             ["stealth",             14, 0x1,    bool,   None, ""],
             ["s2vsb",               13, 0x1,    bool,   None, ""],
             ["s2vsa",               12, 0x1,    bool,   None, ""],
-            ["sg_result",           0,  0x3FF,  int,    None, ""]
+            ["sgresult",            0,  0x3FF,  int,    None, ""]
         ]
         super().__init__(0x6F, "DRVSTATUS", tmc_com, reg_map)
 
@@ -320,9 +320,9 @@ class SgThrs(TmcReg):
         reg_map = [
             ["sg_angle_offset",      9,  0x1,   bool,   None, ""],
             ["sg4_filt_en",          8,  0x1,   bool,   None, ""],
-            ["sg_thrs",              0,  0xFFF, int,    None, ""]
+            ["sgthrs",              0,  0xFFF, int,    None, ""]
         ]
-        super().__init__(0x74, "SG_THRS", tmc_com, reg_map)
+        super().__init__(0x74, "SGTHRS", tmc_com, reg_map)
 
 
 class SgResult(TmcReg):
@@ -332,9 +332,9 @@ class SgResult(TmcReg):
         """constructor"""
 
         reg_map = [
-            ["sg_result",            0,  0xFFFFF, int, None, ""]
+            ["sgresult",            0,  0xFFFFF, int, None, ""]
         ]
-        super().__init__(0x75, "SG_RESULT", tmc_com, reg_map)
+        super().__init__(0x75, "SGRESULT", tmc_com, reg_map)
 
 
 class SgInd(TmcReg):
