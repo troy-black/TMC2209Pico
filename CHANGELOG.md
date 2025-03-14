@@ -1,5 +1,11 @@
 # Changelog
 
+## version 0.7.2
+
+- moved StallGuard code into own mixin class
+- fixed StallGuard on TMC2240 (diag0_pushpull and diag0_stall needed to be activated)
+- renamed sgresult and sgthrs reg values in order to have them consistend between drivers
+
 ## version 0.7
 
 - added Support for TMC2240
