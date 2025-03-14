@@ -8,10 +8,8 @@
 """
 
 import statistics
-import types
 from .tmc_220x import *
 from ._tmc_stallguard import StallGuard
-from ._tmc_gpio_board import GpioPUD
 from .reg._tmc2209_reg import *
 
 
@@ -89,7 +87,7 @@ class Tmc2209(Tmc220x, StallGuard):
 
 # Tmc2209 methods
 # ----------------------------
-    def do_homing(self, diag_pin, revolutions = 10, threshold = None, speed_rpm = None) -> bool:
+    def do_homing(self, diag_pin, revolutions = 10, threshold = 100, speed_rpm = None) -> bool:
         """homes the motor in the given direction using stallguard.
         this method is using vactual to move the motor and an interrupt on the DIAG pin
 
@@ -107,10 +105,7 @@ class Tmc2209(Tmc220x, StallGuard):
             self.tmc_logger.log("do_homing only works with VActual register control via COM", Loglevel.ERROR)
             return False
 
-        if threshold is not None:
-            self._sg_threshold = threshold
-
-        self.tmc_logger.log(f"Stallguard threshold: {self._sg_threshold}", Loglevel.DEBUG)
+        self.tmc_logger.log(f"Stallguard threshold: {threshold}", Loglevel.DEBUG)
 
         if speed_rpm is None:
             speed_rpm = tmc_math.steps_to_rps(self.tmc_mc.max_speed_homing, self.tmc_mc.steps_per_rev)*60
@@ -125,7 +120,7 @@ class Tmc2209(Tmc220x, StallGuard):
         mc_homing.tmc_com = self.tmc_com
         mc_homing.tmc_logger = self.tmc_logger
 
-        self.set_stallguard_callback(diag_pin, self._sg_threshold, mc_homing.stop,
+        self.set_stallguard_callback(diag_pin, threshold, mc_homing.stop,
                                     0.5*tmc_math.rps_to_steps(speed_rpm/60, self.tmc_mc.steps_per_rev))
 
         homing_failed = mc_homing.set_vactual_rpm(speed_rpm, revolutions=revolutions)
@@ -142,7 +137,7 @@ class Tmc2209(Tmc220x, StallGuard):
 
 
 
-    def do_homing2(self, revolutions, threshold=None):
+    def do_homing2(self, revolutions = 10, threshold = 100):
         """homes the motor in the given direction using stallguard
         old function, uses STEP/DIR to move the motor and pulls the StallGuard result
         from the interface
@@ -156,13 +151,10 @@ class Tmc2209(Tmc220x, StallGuard):
             return
         sgresults = []
 
-        if threshold is not None:
-            self._sg_threshold = threshold
-
         self.tmc_logger.log("---", Loglevel.INFO)
         self.tmc_logger.log("homing", Loglevel.INFO)
 
-        self.tmc_logger.log(f"Stallguard threshold: {self._sg_threshold}", Loglevel.DEBUG)
+        self.tmc_logger.log(f"Stallguard threshold: {threshold}", Loglevel.DEBUG)
 
         self.tmc_mc.set_direction_pin(revolutions > 0)
 
@@ -192,7 +184,7 @@ class Tmc2209(Tmc220x, StallGuard):
                 sgresults.append(sgresult)
                 if len(sgresults)>20:
                     sgresult_average = statistics.mean(sgresults[-6:])
-                    if sgresult_average < self._sg_threshold:
+                    if sgresult_average < threshold:
                         break
 
         if step_counter<self.tmc_mc.steps_per_rev:
