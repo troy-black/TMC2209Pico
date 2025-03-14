@@ -72,7 +72,7 @@ class TmcComSpi(TmcCom):
                 self._tmc_logger.log("You need to activate the SPI interface with \"sudo raspi-config\"", Loglevel.ERROR)
             sys.exit()
 
-        self._spi.max_speed_hz =  5000
+        self._spi.max_speed_hz =  8000000
         self._spi.mode = 0b11
         self._spi.lsbfirst = False
 
