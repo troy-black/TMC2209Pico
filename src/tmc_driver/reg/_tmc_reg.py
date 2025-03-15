@@ -17,6 +17,7 @@ class TmcReg():
     _tmc_com: TmcCom
     _reg_map: typing.List
     _data_int: int
+    _flags: typing.Dict
 
 
     @property
@@ -39,6 +40,11 @@ class TmcReg():
         """data_int property"""
         return self._data_int
 
+    @property
+    def flags(self) -> typing.Dict:
+        """flags property"""
+        return self._flags
+
 
     def __init__(self, address:hex, name:str, tmc_com:TmcCom, reg_map:typing.List):
         """Constructor"""
@@ -54,8 +60,6 @@ class TmcReg():
         Args:
             data (int): register value
         """
-        self._data_int = data
-
         for reg in self._reg_map:
             name, pos, mask, reg_class, _, _ = reg
             value = data >> pos & mask
@@ -93,8 +97,13 @@ class TmcReg():
 
     def read(self):
         """read this register"""
-        data = self._tmc_com.read_int(self._addr)
+        data, flags = self._tmc_com.read_int(self._addr)
+
+        self._data_int = data
+        self._flags = flags
+
         self.deserialise(data)
+        return data, flags
 
 
     def write(self):

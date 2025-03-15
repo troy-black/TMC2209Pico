@@ -8,7 +8,6 @@
 TmcComSpi stepper driver spi module
 """
 
-import sys
 import spidev
 from ._tmc_com import *
 
@@ -70,7 +69,7 @@ class TmcComSpi(TmcCom):
             if errnum == 2:
                 self._tmc_logger.log(f"SPI Device {self._spi_dev} on Bus {self._spi_bus} does not exist.", Loglevel.ERROR)
                 self._tmc_logger.log("You need to activate the SPI interface with \"sudo raspi-config\"", Loglevel.ERROR)
-            sys.exit()
+            raise SystemExit
 
         self._spi.max_speed_hz =  8000000
         self._spi.mode = 0b11
@@ -87,6 +86,9 @@ class TmcComSpi(TmcCom):
 
         Args:
             addr (int): HEX, which register to read
+        Returns:
+            int: register value
+            Dict: flags
         """
         self._w_frame = [addr, 0x00, 0x00, 0x00, 0x00]
         dummy_data = [0x00, 0x00, 0x00, 0x00, 0x00]
@@ -94,23 +96,24 @@ class TmcComSpi(TmcCom):
         self._spi.xfer2(self._w_frame)
         rtn = self._spi.xfer2(dummy_data)
 
-        reset_flag =    rtn[0] >> 0 & 0x01
-        driver_error =  rtn[0] >> 1 & 0x01
-        sg2 =           rtn[0] >> 2 & 0x01
-        standstill =    rtn[0] >> 3 & 0x01
+        flags = {
+                "reset_flag":      rtn[0] >> 0 & 0x01,
+                "driver_error":    rtn[0] >> 1 & 0x01,
+                "sg2":             rtn[0] >> 2 & 0x01,
+                "standstill":      rtn[0] >> 3 & 0x01
+                }
 
-
-        if reset_flag:
+        if flags["reset_flag"]:
             self._tmc_logger.log("TMC reset flag is set", Loglevel.ERROR)
-        if driver_error:
+        if flags["driver_error"]:
             self._tmc_logger.log("TMC driver error flag is set", Loglevel.ERROR)
-        if sg2:
+        if flags["sg2"]:
             self._tmc_logger.log("TMC stallguard2 flag is set", Loglevel.MOVEMENT)
-        if standstill:
+        if flags["standstill"]:
             self._tmc_logger.log("TMC standstill flag is set", Loglevel.MOVEMENT)
 
 
-        return rtn[1:]
+        return rtn[1:], flags
 
 
     def read_int(self, addr:hex, tries:int = 10):
@@ -120,9 +123,12 @@ class TmcComSpi(TmcCom):
         Args:
             addr (int): HEX, which register to read
             tries (int): how many tries, before error is raised (Default value = 10)
+        Returns:
+            int: register value
+            Dict: flags
         """
-        data = self.read_reg(addr)
-        return int.from_bytes(data, byteorder='big', signed=False)
+        data, flags = self.read_reg(addr)
+        return int.from_bytes(data, byteorder='big', signed=False), flags
 
 
     def write_reg(self, addr:hex, val:int):
@@ -147,9 +153,8 @@ class TmcComSpi(TmcCom):
 
 
     def write_reg_check(self, addr:hex, val:int, tries:int=10):
-        """this function als writes a value to the register of the TMC
-        but it also checks if the writing process was successfully by checking
-        the InterfaceTransmissionCounter before and after writing
+        """IFCNT is disabled in SPI mode. Therefore, no check is possible.
+        This only calls the write_reg function
 
         Args:
             addr: HEX, which register to write
@@ -165,7 +170,14 @@ class TmcComSpi(TmcCom):
 
     def handle_error(self):
         """error handling"""
-        raise NotImplementedError
+        if self.error_handler_running:
+            return
+        self.error_handler_running = True
+        self._tmc_registers["gstat"].read()
+        self._tmc_registers["gstat"].log(self.tmc_logger)
+
+        self._tmc_logger.log("EXITING!", Loglevel.INFO)
+        raise SystemExit
 
 
     def test_com(self, addr):
