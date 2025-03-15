@@ -174,4 +174,12 @@ class TmcComSpi(TmcCom):
         Args:
             addr (int):  HEX, which register to test
         """
-        raise NotImplementedError
+        self._tmc_registers["ioin"].read()
+        self._tmc_registers["ioin"].log(self.tmc_logger)
+        if self._tmc_registers["ioin"].data_int == 0:
+            self._tmc_logger.log("No answer from TMC received", Loglevel.ERROR)
+            return False
+        if self._tmc_registers["ioin"].version < 0x40:
+            self._tmc_logger.log("No correct Version from TMC received", Loglevel.ERROR)
+            return False
+        return True
