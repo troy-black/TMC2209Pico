@@ -4,6 +4,8 @@
 #pylint: disable=wildcard-import
 #pylint: disable=unused-wildcard-import
 #pylint: disable=too-few-public-methods
+#pylint: disable=too-many-arguments
+#pylint: disable=too-many-positional-arguments
 """
 TmcComSpi stepper driver spi module
 """
