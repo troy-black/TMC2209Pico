@@ -58,13 +58,13 @@ class TmcComUart(TmcCom):
             if errnum == 2:
                 self._tmc_logger.log(f""""{self.ser.serialport} does not exist.
                       You need to activate the serial port with \"sudo raspi-config\"""", Loglevel.ERROR)
-                raise SystemExit
+                raise SystemExit from e
 
             if errnum == 13:
                 self._tmc_logger.log("""you have no permission to use the serial port.
                                     You may need to add your user to the dialout group
                                     with \"sudo usermod -a -G dialout pi\"""", Loglevel.ERROR)
-                raise SystemExit
+                raise SystemExit from e
 
         # adjust per baud and hardware. Sequential reads without some delay fail.
         self.communication_pause = 500 / self.ser.baudrate

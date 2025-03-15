@@ -70,7 +70,7 @@ class TmcComSpi(TmcCom):
             if errnum == 2:
                 self._tmc_logger.log(f"SPI Device {self._spi_dev} on Bus {self._spi_bus} does not exist.", Loglevel.ERROR)
                 self._tmc_logger.log("You need to activate the SPI interface with \"sudo raspi-config\"", Loglevel.ERROR)
-            raise SystemExit
+            raise SystemExit from e
 
         self.spi.max_speed_hz =  8000000
         self.spi.mode = 0b11
