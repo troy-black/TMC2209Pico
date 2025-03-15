@@ -95,6 +95,9 @@ class TmcCom:
 
         Args:
             addr (int): HEX, which register to read
+        Returns:
+            int: register value
+            Dict: flags
         """
         raise NotImplementedError
 
@@ -106,6 +109,9 @@ class TmcCom:
         Args:
             addr (int): HEX, which register to read
             tries (int): how many tries, before error is raised (Default value = 10)
+        Returns:
+            int: register value
+            Dict: flags
         """
         raise NotImplementedError
 

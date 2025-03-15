@@ -6,7 +6,6 @@
 TmcComUart stepper driver uart module
 """
 
-import sys
 import serial
 from ._tmc_com import *
 
@@ -59,13 +58,13 @@ class TmcComUart(TmcCom):
             if errnum == 2:
                 self._tmc_logger.log(f""""{self.ser.serialport} does not exist.
                       You need to activate the serial port with \"sudo raspi-config\"""", Loglevel.ERROR)
-                sys.exit()
+                raise SystemExit from e
 
             if errnum == 13:
                 self._tmc_logger.log("""you have no permission to use the serial port.
                                     You may need to add your user to the dialout group
                                     with \"sudo usermod -a -G dialout pi\"""", Loglevel.ERROR)
-                sys.exit()
+                raise SystemExit from e
 
         # adjust per baud and hardware. Sequential reads without some delay fail.
         self.communication_pause = 500 / self.ser.baudrate
@@ -96,6 +95,9 @@ class TmcComUart(TmcCom):
 
         Args:
             register (int): HEX, which register to read
+        Returns:
+            int: register value
+            Dict: flags
         """
         if self.ser is None:
             self._tmc_logger.log("Cannot read reg, serial is not initialized", Loglevel.ERROR)
@@ -122,7 +124,7 @@ class TmcComUart(TmcCom):
 
         time.sleep(self.communication_pause)
 
-        return rtn
+        return rtn, None
 
 
     def read_int(self, addr:hex, tries:int = 10):
@@ -132,13 +134,16 @@ class TmcComUart(TmcCom):
         Args:
             addr (int): HEX, which register to read
             tries (int): how many tries, before error is raised (Default value = 10)
+        Returns:
+            int: register value
+            Dict: flags
         """
         if self.ser is None:
             self._tmc_logger.log("Cannot read int, serial is not initialized", Loglevel.ERROR)
             return -1
         while True:
             tries -= 1
-            rtn = self.read_reg(addr)
+            rtn, flags = self.read_reg(addr)
             rtn_data = rtn[7:11]
             not_zero_count = len([elem for elem in rtn if elem != 0])
 
@@ -153,13 +158,13 @@ class TmcComUart(TmcCom):
 
             if tries<=0:
                 self._tmc_logger.log("after 10 tries not valid answer", Loglevel.ERROR)
-                self._tmc_logger.log(f"snd:\t{bytes(self.r_frame)}", Loglevel.DEBUG)
+                self._tmc_logger.log(f"addr:\t{addr}", Loglevel.DEBUG)
                 self._tmc_logger.log(f"rtn:\t{rtn}", Loglevel.DEBUG)
                 self.handle_error()
                 return -1
 
         val = struct.unpack(">i",rtn_data)[0]
-        return val
+        return val, flags
 
 
     def write_reg(self, addr:hex, val:int):
@@ -232,7 +237,7 @@ class TmcComUart(TmcCom):
             if tries<=0:
                 self._tmc_logger.log("after 10 tries no valid write access", Loglevel.ERROR)
                 self.handle_error()
-                return -1
+                return False
 
 
     def flush_serial_buffer(self):
