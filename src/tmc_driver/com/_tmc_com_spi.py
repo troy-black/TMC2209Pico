@@ -37,11 +37,14 @@ class TmcComSpi(TmcCom):
     spi = spidev.SpiDev()
     _spi_bus: int
     _spi_dev: int
+    _spi_speed: int
+
 
 
     def __init__(self,
                  spi_bus,
                  spi_dev,
+                 spi_speed:int = 8000000,
                  mtr_id:int = 0,
                  tmc_logger = None
                  ):
@@ -55,6 +58,7 @@ class TmcComSpi(TmcCom):
 
         self._spi_bus = spi_bus
         self._spi_dev = spi_dev
+        self._spi_speed = spi_speed
 
         self._r_frame = [0x55, 0, 0, 0, 0]
         self._w_frame = [0x55, 0, 0, 0, 0]
@@ -72,7 +76,7 @@ class TmcComSpi(TmcCom):
                 self._tmc_logger.log("You need to activate the SPI interface with \"sudo raspi-config\"", Loglevel.ERROR)
             raise SystemExit from e
 
-        self.spi.max_speed_hz =  8000000
+        self.spi.max_speed_hz = self._spi_speed
         self.spi.mode = 0b11
         self.spi.lsbfirst = False
 
