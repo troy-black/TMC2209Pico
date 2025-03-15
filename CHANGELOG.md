@@ -1,5 +1,11 @@
 # Changelog
 
+## version 0.7.3
+
+- increased SPI speed (from 5khz to 8mhz)
+- added SPI speed to TmcComSpi constructor
+- return status flags as dict received with every SPI read access
+
 ## version 0.7.2
 
 - moved StallGuard code into own mixin class
