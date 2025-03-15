@@ -124,7 +124,7 @@ class TmcComUart(TmcCom):
 
         time.sleep(self.communication_pause)
 
-        return rtn
+        return rtn, None
 
 
     def read_int(self, addr:hex, tries:int = 10):
@@ -143,7 +143,7 @@ class TmcComUart(TmcCom):
             return -1
         while True:
             tries -= 1
-            rtn = self.read_reg(addr)
+            rtn, flags = self.read_reg(addr)
             rtn_data = rtn[7:11]
             not_zero_count = len([elem for elem in rtn if elem != 0])
 
@@ -158,13 +158,13 @@ class TmcComUart(TmcCom):
 
             if tries<=0:
                 self._tmc_logger.log("after 10 tries not valid answer", Loglevel.ERROR)
-                self._tmc_logger.log(f"snd:\t{bytes(self.r_frame)}", Loglevel.DEBUG)
+                self._tmc_logger.log(f"addr:\t{addr}", Loglevel.DEBUG)
                 self._tmc_logger.log(f"rtn:\t{rtn}", Loglevel.DEBUG)
                 self.handle_error()
                 return -1
 
         val = struct.unpack(">i",rtn_data)[0]
-        return val, None
+        return val, flags
 
 
     def write_reg(self, addr:hex, val:int):
