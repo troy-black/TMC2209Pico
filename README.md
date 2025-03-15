@@ -92,6 +92,8 @@ is split into their own classes to be able to support the diverse methods.
 
 ### EnableControl
 
+The EnableControl module controls the motor current output. It has a function `set_motor_enabled` with one boolean parameter. This function is used to enable or disable the Motor current output.
+
 EnableControl   | Class                 | Driver    | Notes
 --              | --                    | --        | --
 Pin             | [TmcEnableControlPin](src/tmc_driver/enable_control/_tmc_ec_pin.py)   | all       | the EN Pin of the Driver needs to be connected to a GPIO of the Pi
@@ -99,13 +101,15 @@ TOff            | [TmcEnableControlToff](src/tmc_driver/enable_control/_tmc_ec_t
 
 ### MotionControl
 
+The MotionControl module controls the motion of the motor. Before a movement the motor current output needs to be enabled by the [EnableControl](#enablecontrol) module.
+
 MotionControl   | Class                     | Driver    | Notes
 --              | --                        | --        | --
 STEP/DIR        | [TmcMotionControlStepDir](src/tmc_driver/motion_control/_tmc_mc_step_dir.py)  | all       | the STEP and DIR pin of the driver must each be connected to a GPIO of the Pi
 STEP/REG        | [TmcMotionControlStepReg](src/tmc_driver/motion_control/_tmc_mc_step_reg.py)   | all       | only the STEP pin needs to be connected to a GPIO of the Pi.<br />The direction is controlled via the Register.
 VACTUAL         | [TmcMotionControlVActual](src/tmc_driver/motion_control/_tmc_mc_vactual.py)  | TMC220x   | the Direction and Speed is controlled via Register. But VActual does only allow setting a speed and therefore cannot control positioning of the Motor.
 
-Further methods of controlling a motor could be:
+Further methods of controlling the motion of a motor could be:
 
 - using the built in Motion Controller of the TMC5130
 - via a µC which controlls the Motor
@@ -128,10 +132,10 @@ VDD     |           | 3,3V of Raspberry Pi          | recommended, for forcing t
 GND     | BLACK     | GND of Raspberry Pi           | GND for VDD and Signals
 VM      | RED       | 12V or 24V of power supply    | power for the motor
 GND     | BLACK     | GND of power supply           | power for the motor
-EN      | RED       |GPIO21 of Raspberry Pi         | enable the motor output
-STEP    | GREEN     |GPIO16 of Raspberry Pi         | moves the motor one step per pulse
-DIR     | WHITE     |GPIO20 of Raspberry Pi         | set the direction of the motor
-DIAG    | ORANGE | GPIO26 of Raspberry Pi           | optional, for StallGuard
+EN      | RED       | GPIO21 of Raspberry Pi        | enable the motor output
+STEP    | GREEN     | GPIO16 of Raspberry Pi        | moves the motor one step per pulse
+DIR     | WHITE     | GPIO20 of Raspberry Pi        | set the direction of the motor
+DIAG    | ORANGE    | GPIO26 of Raspberry Pi        | optional, for StallGuard
 
 The GPIO pins can be specific when initiating the class.
 If you test this on a breadboard, make sure to cut off the bottomside of the pins (Vref and DIAG) next to the EN pin, so that they are not shorted trough the breadboard.
