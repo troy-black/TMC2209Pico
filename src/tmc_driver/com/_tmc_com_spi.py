@@ -34,9 +34,10 @@ class TmcComSpi(TmcCom):
     like the current or the microsteppingmode
     """
 
-    _spi = spidev.SpiDev()
+    spi = spidev.SpiDev()
     _spi_bus: int
     _spi_dev: int
+
 
     def __init__(self,
                  spi_bus,
@@ -62,7 +63,7 @@ class TmcComSpi(TmcCom):
     def init(self):
         """init"""
         try:
-            self._spi.open(self._spi_bus, self._spi_dev)
+            self.spi.open(self._spi_bus, self._spi_dev)
         except Exception as e:
             self._tmc_logger.log(f"Error opening SPI: {e}", Loglevel.ERROR)
             errnum = e.args[0]
@@ -71,9 +72,9 @@ class TmcComSpi(TmcCom):
                 self._tmc_logger.log("You need to activate the SPI interface with \"sudo raspi-config\"", Loglevel.ERROR)
             raise SystemExit
 
-        self._spi.max_speed_hz =  8000000
-        self._spi.mode = 0b11
-        self._spi.lsbfirst = False
+        self.spi.max_speed_hz =  8000000
+        self.spi.mode = 0b11
+        self.spi.lsbfirst = False
 
 
     def __del__(self):
@@ -93,8 +94,8 @@ class TmcComSpi(TmcCom):
         self._w_frame = [addr, 0x00, 0x00, 0x00, 0x00]
         dummy_data = [0x00, 0x00, 0x00, 0x00, 0x00]
 
-        self._spi.xfer2(self._w_frame)
-        rtn = self._spi.xfer2(dummy_data)
+        self.spi.xfer2(self._w_frame)
+        rtn = self.spi.xfer2(dummy_data)
 
         flags = {
                 "reset_flag":      rtn[0] >> 0 & 0x01,
@@ -149,7 +150,7 @@ class TmcComSpi(TmcCom):
         self._w_frame[4] = 0xFF & val
         # self.w_frame[7] = compute_crc8_atm(self.w_frame[:-1])
 
-        self._spi.xfer2(self._w_frame)
+        self.spi.xfer2(self._w_frame)
 
 
     def write_reg_check(self, addr:hex, val:int, tries:int=10):
