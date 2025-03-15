@@ -81,12 +81,29 @@ class BaseGPIOWrapper:
         """cleanup GPIO pin"""
         raise NotImplementedError
 
-    def gpio_input(self, pin:int):
+    def gpio_input(self, pin:int) -> int:
         """read GPIO pin"""
         raise NotImplementedError
 
     def gpio_output(self, pin:int, value):
         """write GPIO pin"""
+        raise NotImplementedError
+
+    def gpio_pwm_setup(self, pin:int, frequency:int = 10, duty_cycle:int = 0):
+        """setup PWM"""
+        raise NotImplementedError
+
+    def gpio_pwm_set_frequency(self, pin:int, frequency:int):
+        """set PWM frequency"""
+        raise NotImplementedError
+
+    def gpio_pwm_set_duty_cycle(self, pin:int, duty_cycle:int):
+        """set PWM duty cycle
+
+        Args:
+            pin (int): pin number
+            duty_cycle (int): duty cycle in percent (0-100)
+        """
         raise NotImplementedError
 
     def gpio_add_event_detect(self, pin:int, callback:types.FunctionType):
@@ -99,6 +116,8 @@ class BaseGPIOWrapper:
 
 class BaseRPiGPIOWrapper(BaseGPIOWrapper):
     """RPI.GPIO base wrapper"""
+
+    _gpios_pwm = [None] * 200
 
     def init(self, gpio_mode=None):
         """initialize GPIO library"""
@@ -125,13 +144,32 @@ class BaseRPiGPIOWrapper(BaseGPIOWrapper):
         """cleanup GPIO pin"""
         self.GPIO.cleanup(pin)
 
-    def gpio_input(self, pin:int):
+    def gpio_input(self, pin:int) -> int:
         """read GPIO pin"""
         return self.GPIO.input(pin)
 
     def gpio_output(self, pin:int, value:int):
         """write GPIO pin"""
         self.GPIO.output(pin, value)
+
+    def gpio_pwm_setup(self, pin:int, frequency:int = 10, duty_cycle:int = 0):
+        """setup PWM"""
+        self.GPIO.setup(pin, int(GpioMode.OUT), initial=int(Gpio.LOW))
+        self._gpios_pwm[pin] = self.GPIO.PWM(pin, frequency)
+        self._gpios_pwm[pin].start(duty_cycle)
+
+    def gpio_pwm_set_frequency(self, pin:int, frequency:int):
+        """set PWM frequency"""
+        self._gpios_pwm[pin].ChangeFrequency(frequency)
+
+    def gpio_pwm_set_duty_cycle(self, pin:int, duty_cycle:int):
+        """set PWM duty cycle
+
+        Args:
+            pin (int): pin number
+            duty_cycle (int): duty cycle in percent (0-100)
+        """
+        self._gpios_pwm[pin].ChangeDutyCycle(duty_cycle)
 
     def gpio_add_event_detect(self, pin:int, callback:types.FunctionType):
         """add event detect"""
@@ -140,6 +178,7 @@ class BaseRPiGPIOWrapper(BaseGPIOWrapper):
     def gpio_remove_event_detect(self, pin:int):
         """remove event detect"""
         self.GPIO.remove_event_detect(pin)
+
 
 class MockGPIOWrapper(BaseRPiGPIOWrapper):
     """Mock.GPIO wrapper"""
@@ -176,11 +215,13 @@ class OPiGPIOWrapper(BaseRPiGPIOWrapper):
 class GpiozeroWrapper(BaseGPIOWrapper):
     """gpiozero GPIO wrapper"""
 
+    _gpios = [None] * 200
+    _gpios_pwm = [None] * 200
+
     def __init__(self):
         """constructor, imports gpiozero"""
         self.gpiozero = import_module('gpiozero')
         dependencies_logger.log("using gpiozero for GPIO control", Loglevel.INFO)
-        self._gpios = [None] * 200
 
     def init(self, gpio_mode=None):
         """initialize GPIO library. pass on gpiozero"""
@@ -199,15 +240,35 @@ class GpiozeroWrapper(BaseGPIOWrapper):
 
     def gpio_cleanup(self, pin:int):
         """cleanup GPIO pin"""
-        self._gpios[pin].close()
+        if self._gpios[pin] is not None:
+            self._gpios[pin].close()
+        if self._gpios_pwm[pin] is not None:
+            self._gpios_pwm[pin].close()
 
-    def gpio_input(self, pin:int):
+    def gpio_input(self, pin:int) -> int:
         """read GPIO pin"""
         return self._gpios[pin].value
 
     def gpio_output(self, pin:int, value):
         """write GPIO pin"""
         self._gpios[pin].value = value
+
+    def gpio_pwm_setup(self, pin:int, frequency:int = 10, duty_cycle:int = 0):
+        """setup PWM"""
+        self._gpios_pwm[pin] = self.gpiozero.PWMOutputDevice(pin)
+
+    def gpio_pwm_set_frequency(self, pin:int, frequency:int):
+        """set PWM frequency"""
+        self._gpios_pwm[pin].frequency = frequency
+
+    def gpio_pwm_set_duty_cycle(self, pin:int, duty_cycle:int):
+        """set PWM duty cycle
+
+        Args:
+            pin (int): pin number
+            duty_cycle (int): duty cycle in percent (0-100)
+        """
+        self._gpios_pwm[pin].value = duty_cycle/100
 
     def gpio_add_event_detect(self, pin:int, callback:types.FunctionType):
         """add event detect"""
@@ -244,7 +305,7 @@ class peripheryWrapper(BaseGPIOWrapper):
         """cleanup GPIO pin"""
         self._gpios[pin].close()
 
-    def gpio_input(self, pin:int):
+    def gpio_input(self, pin:int) -> int:
         """read GPIO pin"""
         return self._gpios[pin].read()
 

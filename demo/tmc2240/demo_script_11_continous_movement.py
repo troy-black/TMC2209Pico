@@ -22,14 +22,14 @@ print("---")
 # use your pins for pin_en, pin_step, pin_dir here
 #-----------------------------------------------------------------------
 if BOARD == Board.RASPBERRY_PI:
-    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepPwmDir(13, 19), TmcComSpi(0, 0))
 elif BOARD == Board.RASPBERRY_PI5:
-    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepPwmDir(13, 19), TmcComSpi(0, 0))
 elif BOARD == Board.NVIDIA_JETSON:
-    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepPwmDir(13, 19), TmcComSpi(0, 0))
 else:
     # just in case
-    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepPwmDir(13, 19), TmcComSpi(0, 0))
 
 
 
@@ -77,20 +77,6 @@ print("---\n---")
 
 
 
-
-
-#-----------------------------------------------------------------------
-# set the Acceleration and maximal Speed in fullsteps
-#-----------------------------------------------------------------------
-tmc.acceleration_fullstep = 1000
-tmc.max_speed_fullstep = 250
-
-
-
-
-
-
-
 #-----------------------------------------------------------------------
 # activate the motor current output
 #-----------------------------------------------------------------------
@@ -102,19 +88,15 @@ print(f"VSupply:\t{tmc.get_vsupply()} V")
 
 
 #-----------------------------------------------------------------------
-# move the motor 1 revolution
+# move the motor
 #-----------------------------------------------------------------------
-tmc.run_to_position_fullsteps(200)                              #move to position 200 (fullsteps)
-tmc.run_to_position_fullsteps(0)                                #move to position 0
-
-tmc.run_to_position_fullsteps(200, MovementAbsRel.RELATIVE)     #move 200 fullsteps forward
-tmc.run_to_position_fullsteps(-200, MovementAbsRel.RELATIVE)    #move 200 fullsteps backward
-
-tmc.run_to_position_steps(400)                                  #move to position 400 (µsteps)
-tmc.run_to_position_steps(0)                                    #move to position 0
-
-tmc.run_to_position_revolutions(1)                              #move 1 revolution forward
-tmc.run_to_position_revolutions(0)                              #move 1 revolution backward
+tmc.tmc_mc.run_speed_fullstep(800)
+time.sleep(5)
+tmc.tmc_mc.run_speed_fullstep(0)
+time.sleep(1)
+tmc.tmc_mc.run_speed_fullstep(-800)
+time.sleep(5)
+tmc.tmc_mc.run_speed_fullstep(0)
 
 
 

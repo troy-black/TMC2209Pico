@@ -108,6 +108,7 @@ MotionControl   | Class                     | Driver    | Notes
 STEP/DIR        | [TmcMotionControlStepDir](src/tmc_driver/motion_control/_tmc_mc_step_dir.py)  | all       | the STEP and DIR pin of the driver must each be connected to a GPIO of the Pi
 STEP/REG        | [TmcMotionControlStepReg](src/tmc_driver/motion_control/_tmc_mc_step_reg.py)   | all       | only the STEP pin needs to be connected to a GPIO of the Pi.<br />The direction is controlled via the Register.
 VACTUAL         | [TmcMotionControlVActual](src/tmc_driver/motion_control/_tmc_mc_vactual.py)  | TMC220x   | the Direction and Speed is controlled via Register. But VActual does only allow setting a speed and therefore cannot control positioning of the Motor.
+STEP_PWM/DIR    | [TmcMotionControlStepPwmDir](src/tmc_driver/motion_control/_tmc_mc_step_pwm_dir.py) | all | In contrast to STEP/DIR, the step pin is controlled by PWM. This reduces the load on the CPU, but does not allow precise positioning (similar to the VACTUAL).<br />STEP must be connected to a PWM-capable pin for this purpose
 
 Further methods of controlling the motion of a motor could be:
 
