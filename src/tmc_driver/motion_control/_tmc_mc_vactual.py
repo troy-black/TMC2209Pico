@@ -40,6 +40,17 @@ class TmcMotionControlVActual(TmcMotionControl):
         raise NotImplementedError
 
 
+    def stop(self, stop_mode = StopMode.HARDSTOP):
+        """stop the current movement
+
+        Args:
+            stop_mode (enum): whether the movement should be stopped immediately or softly
+                (Default value = StopMode.HARDSTOP)
+        """
+        super().stop(stop_mode)
+        self.set_vactual(0)
+
+
     def run_to_position_steps(self, steps, movement_abs_rel:MovementAbsRel = None):
         """runs the motor to the given position.
         with acceleration and deceleration

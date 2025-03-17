@@ -100,6 +100,17 @@ class TmcMotionControlStepPwmDir(TmcMotionControl):
         tmc_gpio.gpio_output(self._pin_dir, direction.value)
 
 
+    def stop(self, stop_mode = StopMode.HARDSTOP):
+        """stop the current movement
+
+        Args:
+            stop_mode (enum): whether the movement should be stopped immediately or softly
+                (Default value = StopMode.HARDSTOP)
+        """
+        super().stop(stop_mode)
+        tmc_gpio.gpio_pwm_set_duty_cycle(self._pin_step, 0)
+
+
     def run_to_position_steps(self, steps, movement_abs_rel:MovementAbsRel = None) -> StopMode:
         """runs the moptor
         blocks the code until finished or stopped from a different thread!
