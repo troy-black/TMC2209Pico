@@ -116,6 +116,7 @@ class TmcMotionControlStepDir(TmcMotionControl):
         """_pin_dir property"""
         return self._pin_dir
 
+
     def __init__(self, pin_step:int, pin_dir:int):
         """constructor"""
         self._pin_step = pin_step

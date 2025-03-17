@@ -188,3 +188,23 @@ class TmcMotionControlVActual(TmcMotionControl):
             stop (enum): how the movement was finished
         """
         return self.set_vactual_rps(rpm/60, duration, revolutions, acceleration)
+
+
+    def run_speed(self, speed:int):
+        """runs the motor
+        does not block the code
+
+        Args:
+            speed (int): speed in µsteps per second
+        """
+        self.set_vactual(speed/0.715)
+
+
+    def run_speed_fullstep(self, speed:int):
+        """runs the motor
+        does not block the code
+
+        Args:
+            speed (int): speed in fullsteps per second
+        """
+        self.run_speed(speed * self.mres)
