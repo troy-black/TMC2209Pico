@@ -253,9 +253,20 @@ class GpiozeroWrapper(BaseGPIOWrapper):
         """write GPIO pin"""
         self._gpios[pin].value = value
 
+    def gpio_pwm_enable(self, pin:int, enable:bool):
+        """switch to PWM"""
+        if enable:
+            if self._gpios[pin] is not None:
+                self._gpios[pin] = None
+                self._gpios_pwm[pin] = self.gpiozero.PWMOutputDevice(pin)
+        else:
+            if self._gpios_pwm[pin] is not None:
+                self._gpios_pwm[pin] = None
+                self._gpios[pin] = self.gpiozero.DigitalOutputDevice(pin)
+
     def gpio_pwm_setup(self, pin:int, frequency:int = 10, duty_cycle:int = 0):
         """setup PWM"""
-        self._gpios_pwm[pin] = self.gpiozero.PWMOutputDevice(pin)
+        # self._gpios_pwm[pin] = self.gpiozero.PWMOutputDevice(pin)
 
     def gpio_pwm_set_frequency(self, pin:int, frequency:int):
         """set PWM frequency"""

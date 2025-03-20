@@ -77,6 +77,20 @@ print("---\n---")
 
 
 
+
+
+#-----------------------------------------------------------------------
+# set the Acceleration and maximal Speed in fullsteps
+#-----------------------------------------------------------------------
+tmc.acceleration_fullstep = 1000
+tmc.max_speed_fullstep = 250
+
+
+
+
+
+
+
 #-----------------------------------------------------------------------
 # activate the motor current output
 #-----------------------------------------------------------------------
@@ -90,14 +104,23 @@ print(f"VSupply:\t{tmc.get_vsupply()} V")
 #-----------------------------------------------------------------------
 # move the motor
 #-----------------------------------------------------------------------
-tmc.tmc_mc.run_speed_pwm_fullstep(800)
+
+# conventional movement
+tmc.run_to_position_fullsteps(200)                              #move to position 200 (fullsteps)
+tmc.run_to_position_fullsteps(0)                                #move to position 0
+
+# continous movement using pwm
+tmc.tmc_mc.run_speed_pwm_fullstep(250)
 time.sleep(5)
 tmc.tmc_mc.run_speed_pwm_fullstep(0)
 time.sleep(1)
-tmc.tmc_mc.run_speed_pwm_fullstep(-800)
+tmc.tmc_mc.run_speed_pwm_fullstep(-250)
 time.sleep(5)
 tmc.tmc_mc.run_speed_pwm_fullstep(0)
 
+# conventional movement
+tmc.run_to_position_fullsteps(200)                              #move to position 200 (fullsteps)
+tmc.run_to_position_fullsteps(0)                                #move to position 0
 
 
 #-----------------------------------------------------------------------
