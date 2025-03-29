@@ -220,6 +220,8 @@ So you don't need to connect anything to the Vio pin of the driver.
 
 ## Usage
 
+The library currently uses functions to access the TMC registers, but Python properties for internal getters/setters.
+
 ```python
 from tmc_driver.tmc_2209 import *
 tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/serial0"))
@@ -231,8 +233,8 @@ tmc.set_spreadcycle(False)
 tmc.set_microstepping_resolution(2)
 tmc.set_internal_rsense(False)
 
-tmc.set_acceleration(2000)
-tmc.set_max_speed(500)
+tmc.acceleration_fullstep = 1000
+tmc.max_speed_fullstep = 250
 
 tmc.set_motor_enabled(True)
 
