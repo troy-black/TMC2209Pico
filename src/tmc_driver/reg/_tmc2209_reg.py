@@ -2,12 +2,12 @@
 #pylint: disable=unused-wildcard-import
 #pylint: disable=unused-import
 #pylint: disable=attribute-defined-outside-init
+#pylint: disable=no-member
 """
 Register module
 """
 
 from ._tmc220x_reg import *
-
 
 
 class TCoolThrs(TmcReg):

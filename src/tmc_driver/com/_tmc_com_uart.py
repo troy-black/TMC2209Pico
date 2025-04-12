@@ -8,6 +8,7 @@ TmcComUart stepper driver uart module
 
 import serial
 from ._tmc_com import *
+from .._tmc_exceptions import TmcComException, TmcDriverException
 
 
 
@@ -256,7 +257,7 @@ class TmcComUart(TmcCom):
         self._tmc_registers["gstat"].read()
         self._tmc_registers["gstat"].log(self.tmc_logger)
         self._tmc_registers["gstat"].check()
-        raise Exception("TMC220X: unknown error detected")
+        raise TmcDriverException("TMC220X: unknown error detected")
 
 
 

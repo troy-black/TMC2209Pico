@@ -2,12 +2,14 @@
 #pylint: disable=unused-wildcard-import
 #pylint: disable=unused-import
 #pylint: disable=attribute-defined-outside-init
+#pylint: disable=no-member
 """
 Register module
 """
 
 import math
 from ._tmc_reg import *
+from .._tmc_exceptions import TmcDriverException
 
 
 class GConf(TmcReg):
@@ -48,11 +50,11 @@ class GStat(TmcReg):
         """check if the driver is ok"""
         self.read()
         if self.reset:
-            raise Exception("TMC220X: reset detected")
+            raise TmcDriverException("TMC220X: reset detected")
         if self.uv_cp:
-            raise Exception("TMC220X: undervoltage detected")
+            raise TmcDriverException("TMC220X: undervoltage detected")
         if self.drv_err:
-            raise Exception("TMC220X: driver error detected")
+            raise TmcDriverException("TMC220X: driver error detected")
 
 
 class IfCnt(TmcReg):
