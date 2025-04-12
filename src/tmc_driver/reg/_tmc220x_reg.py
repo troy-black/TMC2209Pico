@@ -44,6 +44,16 @@ class GStat(TmcReg):
         ]
         super().__init__(0x1, "GSTAT", tmc_com, reg_map)
 
+    def check(self):
+        """check if the driver is ok"""
+        self.read()
+        if self.reset:
+            raise Exception("TMC220X: reset detected")
+        if self.uv_cp:
+            raise Exception("TMC220X: undervoltage detected")
+        if self.drv_err:
+            raise Exception("TMC220X: driver error detected")
+
 
 class IfCnt(TmcReg):
     """IFCNT register class"""

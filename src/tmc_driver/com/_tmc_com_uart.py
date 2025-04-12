@@ -255,9 +255,9 @@ class TmcComUart(TmcCom):
         self.error_handler_running = True
         self._tmc_registers["gstat"].read()
         self._tmc_registers["gstat"].log(self.tmc_logger)
+        self._tmc_registers["gstat"].check()
+        raise Exception("TMC220X: unknown error detected")
 
-        self._tmc_logger.log("EXITING!", Loglevel.INFO)
-        raise SystemExit
 
 
     def test_com(self, addr):
