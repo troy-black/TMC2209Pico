@@ -1,5 +1,11 @@
 # Changelog
 
+## version 0.7.4
+
+- added custom exceptions
+- added TmcMotionControlStepPwmDir
+- fixed homing
+
 ## version 0.7.3
 
 - increased SPI speed (from 5khz to 8mhz)

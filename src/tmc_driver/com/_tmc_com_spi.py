@@ -12,6 +12,7 @@ TmcComSpi stepper driver spi module
 
 import spidev
 from ._tmc_com import *
+from .._tmc_exceptions import TmcComException, TmcDriverException
 
 # class MockSpiDev:
 #     """MockSpiDev"""
@@ -111,9 +112,9 @@ class TmcComSpi(TmcCom):
                 }
 
         if flags["reset_flag"]:
-            self._tmc_logger.log("TMC reset flag is set", Loglevel.ERROR)
+            raise TmcDriverException("TMC224X: reset detected")
         if flags["driver_error"]:
-            self._tmc_logger.log("TMC driver error flag is set", Loglevel.ERROR)
+            raise TmcDriverException("TMC224X: driver error detected")
         if flags["sg2"]:
             self._tmc_logger.log("TMC stallguard2 flag is set", Loglevel.MOVEMENT)
         if flags["standstill"]:
@@ -182,9 +183,8 @@ class TmcComSpi(TmcCom):
         self.error_handler_running = True
         self._tmc_registers["gstat"].read()
         self._tmc_registers["gstat"].log(self.tmc_logger)
-
-        self._tmc_logger.log("EXITING!", Loglevel.INFO)
-        raise SystemExit
+        self._tmc_registers["gstat"].check()
+        raise TmcDriverException("TMC220X: unknown error detected")
 
 
     def test_com(self, addr):

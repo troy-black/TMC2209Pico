@@ -9,6 +9,7 @@ Register module
 
 import math
 from ._tmc_reg import *
+from .._tmc_exceptions import TmcDriverException
 
 
 class GConf(TmcReg):
@@ -51,6 +52,20 @@ class GStat(TmcReg):
             ["reset",               0,  0x1, bool, None, ""]
         ]
         super().__init__(0x1, "GSTAT", tmc_com, reg_map)
+
+    def check(self):
+        """check if the driver is ok"""
+        self.read()
+        if self.vm_uvlo:
+            raise TmcDriverException("TMC224X: Vmotor undervoltage detected")
+        if self.register_reset:
+            raise TmcDriverException("TMC224X: register reset detected")
+        if self.uv_cp:
+            raise TmcDriverException("TMC224X: Charge Pump undervoltage detected")
+        if self.drv_err:
+            raise TmcDriverException("TMC224X: driver error detected")
+        if self.reset:
+            raise TmcDriverException("TMC224X: reset detected")
 
 
 class IfCnt(TmcReg):

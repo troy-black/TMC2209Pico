@@ -29,6 +29,7 @@ from .motion_control._tmc_mc_vactual import TmcMotionControlVActual
 from ._tmc_logger import TmcLogger, Loglevel
 from .reg._tmc220x_reg import *
 from . import _tmc_math as tmc_math
+from ._tmc_exceptions import TmcException, TmcComException, TmcMotionControlException, TmcEnableControlException, TmcDriverException
 
 
 

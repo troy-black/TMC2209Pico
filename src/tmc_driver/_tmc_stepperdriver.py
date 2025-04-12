@@ -16,6 +16,7 @@ from .motion_control._tmc_mc import TmcMotionControl, MovementAbsRel, MovementPh
 from .enable_control._tmc_ec import TmcEnableControl
 from .enable_control._tmc_ec_pin import TmcEnableControlPin
 from .motion_control._tmc_mc_step_dir import TmcMotionControlStepDir
+from .motion_control._tmc_mc_step_pwm_dir import TmcMotionControlStepPwmDir
 from ._tmc_logger import TmcLogger, Loglevel
 from . import _tmc_math as tmc_math
 

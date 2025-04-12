@@ -24,7 +24,7 @@ Because the TMC2209 uses one shared pin for transmit and receive in the UART com
 Well, the Pi receives 4 bytes from itself and 8 bytes from the driver. So the Pi receives a total of 12 bytes and only the last 8 are the reply, of which only 4 are data bytes.
 
 The Documentation of the TMC2209 can be found here:
-[TMC2209 - Datsheet](https://www.analog.com/media/en/technical-documentation/data-sheets/TMC2209_datasheet_rev1.09.pdf)
+[TMC2209 - Datasheet](https://www.analog.com/media/en/technical-documentation/data-sheets/TMC2209_datasheet_rev1.09.pdf)
 
 The code is also available on [PyPI](https://pypi.org/project/PyTmcStepper).
 
@@ -108,6 +108,7 @@ MotionControl   | Class                     | Driver    | Notes
 STEP/DIR        | [TmcMotionControlStepDir](src/tmc_driver/motion_control/_tmc_mc_step_dir.py)  | all       | the STEP and DIR pin of the driver must each be connected to a GPIO of the Pi
 STEP/REG        | [TmcMotionControlStepReg](src/tmc_driver/motion_control/_tmc_mc_step_reg.py)   | all       | only the STEP pin needs to be connected to a GPIO of the Pi.<br />The direction is controlled via the Register.
 VACTUAL         | [TmcMotionControlVActual](src/tmc_driver/motion_control/_tmc_mc_vactual.py)  | TMC220x   | the Direction and Speed is controlled via Register. But VActual does only allow setting a speed and therefore cannot control positioning of the Motor.
+STEP_PWM/DIR    | [TmcMotionControlStepPwmDir](src/tmc_driver/motion_control/_tmc_mc_step_pwm_dir.py) | all | In contrast to STEP/DIR, the step pin is controlled by PWM. This reduces the load on the CPU, but does not allow precise positioning (similar to the VACTUAL).<br />STEP must be connected to a PWM-capable pin for this purpose
 
 Further methods of controlling the motion of a motor could be:
 
@@ -219,6 +220,8 @@ So you don't need to connect anything to the Vio pin of the driver.
 
 ## Usage
 
+The library currently uses functions to access the TMC registers, but Python properties for internal getters/setters.
+
 ```python
 from tmc_driver.tmc_2209 import *
 tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/serial0"))
@@ -230,8 +233,8 @@ tmc.set_spreadcycle(False)
 tmc.set_microstepping_resolution(2)
 tmc.set_internal_rsense(False)
 
-tmc.set_acceleration(2000)
-tmc.set_max_speed(500)
+tmc.acceleration_fullstep = 1000
+tmc.max_speed_fullstep = 250
 
 tmc.set_motor_enabled(True)
 

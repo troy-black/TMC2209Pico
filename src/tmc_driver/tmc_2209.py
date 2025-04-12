@@ -117,8 +117,8 @@ class Tmc2209(Tmc220x, StallGuard):
         self.set_spreadcycle(0)
 
         mc_homing = TmcMotionControlVActual()
+        mc_homing.init(self.tmc_logger)
         mc_homing.tmc_com = self.tmc_com
-        mc_homing.tmc_logger = self.tmc_logger
 
         self.set_stallguard_callback(diag_pin, threshold, mc_homing.stop,
                                     0.5*tmc_math.rps_to_steps(speed_rpm/60, self.tmc_mc.steps_per_rev))

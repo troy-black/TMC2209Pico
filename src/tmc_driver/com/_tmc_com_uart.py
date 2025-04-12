@@ -2,12 +2,14 @@
 #pylint: disable=broad-exception-caught
 #pylint: disable=wildcard-import
 #pylint: disable=unused-wildcard-import
+#pylint: disable=unused-import
 """
 TmcComUart stepper driver uart module
 """
 
 import serial
 from ._tmc_com import *
+from .._tmc_exceptions import TmcComException, TmcDriverException
 
 
 
@@ -255,9 +257,9 @@ class TmcComUart(TmcCom):
         self.error_handler_running = True
         self._tmc_registers["gstat"].read()
         self._tmc_registers["gstat"].log(self.tmc_logger)
+        self._tmc_registers["gstat"].check()
+        raise TmcDriverException("TMC220X: unknown error detected")
 
-        self._tmc_logger.log("EXITING!", Loglevel.INFO)
-        raise SystemExit
 
 
     def test_com(self, addr):

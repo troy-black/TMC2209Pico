@@ -30,6 +30,7 @@ from ._tmc_stallguard import StallGuard
 from ._tmc_logger import TmcLogger, Loglevel
 from .reg._tmc224x_reg import *
 from . import _tmc_math as tmc_math
+from ._tmc_exceptions import TmcException, TmcComException, TmcMotionControlException, TmcEnableControlException, TmcDriverException
 
 
 
