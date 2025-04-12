@@ -2,6 +2,7 @@
 #pylint: disable=broad-exception-caught
 #pylint: disable=wildcard-import
 #pylint: disable=unused-wildcard-import
+#pylint: disable=unused-import
 """
 TmcComUart stepper driver uart module
 """
