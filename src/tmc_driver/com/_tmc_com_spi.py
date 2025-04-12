@@ -111,9 +111,9 @@ class TmcComSpi(TmcCom):
                 }
 
         if flags["reset_flag"]:
-            self._tmc_logger.log("TMC reset flag is set", Loglevel.ERROR)
+            raise Exception("TMC224X: reset detected")
         if flags["driver_error"]:
-            self._tmc_logger.log("TMC driver error flag is set", Loglevel.ERROR)
+            raise Exception("TMC224X: driver error detected")
         if flags["sg2"]:
             self._tmc_logger.log("TMC stallguard2 flag is set", Loglevel.MOVEMENT)
         if flags["standstill"]:
