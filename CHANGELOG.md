@@ -1,5 +1,85 @@
 # Changelog
 
+## version 0.7.4
+
+- added custom exceptions
+- added TmcMotionControlStepPwmDir
+- fixed homing
+
+## version 0.7.3
+
+- increased SPI speed (from 5khz to 8mhz)
+- added SPI speed to TmcComSpi constructor
+- return status flags as dict received with every SPI read access
+
+## version 0.7.2
+
+- moved StallGuard code into own mixin class
+- fixed StallGuard on TMC2240 (diag0_pushpull and diag0_stall needed to be activated)
+- renamed sgresult and sgthrs reg values in order to have them consistend between drivers
+
+## version 0.7
+
+- added Support for TMC2240
+- changed registers to be initialized as Lists (Bitmasks and Bitpositions)
+- added Support for SPI
+- Split code for EnableControl and MotionControl into their own classes
+- added Classes for EnableControl
+  - TmcEnableControlPin
+  - TmcEnableControlToff
+- added Classes for MotionControl
+  - TmcMotionControlStepDir
+  - TmcMotionControlStepReg
+  - TmcMotionControlVActual
+- added support for coolstep
+- changed library name to PyTmcStepper
+
+## version 0.6
+
+- refactored deserialisation and serialisation of register values to use classes
+- changed file names according to PEP8
+- changed class names according to PEP8
+
+## version 0.5.7
+
+- refactored GPIO access to use inherited classes
+- use mapping table for mapping gpio library to the board
+- fixed print output in test_uart()
+- make fullsteps_per_rev configurable in constructor
+
+## version 0.5.6
+
+- fixed return status instead of hardcoded True in test_uart
+- refactored test_dir_step_en function
+- fixed links in readme
+- switched to python 3.13 in unittests
+
+## version 0.5.5
+
+- changed Nvidia Jetson detection
+
+## version 0.5.4
+
+- added Orange Pi Support
+
+## version 0.5.3
+
+- added math function constrain
+- added function set_speed
+- added function set_speed_fullstep
+- added demo_script_11_continous_movement
+- reworked github actions pipeline (one multi-staged-pipeline)
+
+## version 0.5.2
+
+- added extra error handling for when the UART serial is not set
+
+## version 0.5.1
+
+- added toff setting
+- added support for controlling direction during movement over UART
+- added demo script for motor movement using only the STEP pin
+
 ## version 0.5
 
 - decoupled gpio access from gpio library

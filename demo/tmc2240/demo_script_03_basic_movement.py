@@ -1,12 +1,12 @@
 """
-test file for testing the StallGuard feature
+test file for testing basic movement
 """
 
 import time
 try:
-    from src.tmc_driver.tmc_2209 import *
+    from src.tmc_driver.tmc_2240 import *
 except ModuleNotFoundError:
-    from tmc_driver.tmc_2209 import *
+    from tmc_driver.tmc_2240 import *
 
 
 print("---")
@@ -22,17 +22,17 @@ print("---")
 # use your pins for pin_en, pin_step, pin_dir here
 #-----------------------------------------------------------------------
 if BOARD == Board.RASPBERRY_PI:
-    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/serial0"), loglevel=Loglevel.DEBUG)
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
 elif BOARD == Board.RASPBERRY_PI5:
-    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/ttyAMA0"), loglevel=Loglevel.DEBUG)
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
 elif BOARD == Board.NVIDIA_JETSON:
-    raise NotImplementedError('''
-        Not implemented. Needs refinement.\n
-        Nvidia Jetson has nuances with the parameter pull_up_down for pin_stallguard:
-        https://github.com/NVIDIA/jetson-gpio/issues/5''')
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
 else:
     # just in case
-    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/serial0"), loglevel=Loglevel.DEBUG)
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
+
+
+
 
 
 
@@ -56,7 +56,7 @@ tmc.set_current(300)
 tmc.set_interpolation(True)
 tmc.set_spreadcycle(False)
 tmc.set_microstepping_resolution(2)
-tmc.set_internal_rsense(False)
+tmc.set_toff(5)
 
 
 print("---\n---")
@@ -80,10 +80,12 @@ print("---\n---")
 
 
 #-----------------------------------------------------------------------
-# set the Accerleration and maximal Speed
+# set the Acceleration and maximal Speed in fullsteps
 #-----------------------------------------------------------------------
 tmc.acceleration_fullstep = 1000
 tmc.max_speed_fullstep = 250
+
+
 
 
 
@@ -93,65 +95,35 @@ tmc.max_speed_fullstep = 250
 # activate the motor current output
 #-----------------------------------------------------------------------
 tmc.set_motor_enabled(True)
-
-
-
-
-
-#-----------------------------------------------------------------------
-# runs the motor 800 steps in a thread and
-# prints the stallguard result for each movement phase
-#-----------------------------------------------------------------------
-tmc.test_stallguard_threshold(800)
-
-
+print("BEFORE MOVEMENT")
+print(f"Temperature:\t{tmc.get_temperature()} °C")
+print(f"VSupply:\t{tmc.get_vsupply()} V")
 
 
 
 #-----------------------------------------------------------------------
-# set a callback function for the stallguard interrupt based detection
-# 1. param: pin connected to the tmc DIAG output
-# 2. param: is the threshold StallGuard
-# 3. param: is the callback function (threaded)
-# 4. param (optional): min speed threshold (in steptime measured  in  clock  cycles)
+# move the motor 1 revolution
 #-----------------------------------------------------------------------
-def my_callback():
-    """StallGuard callback"""
-    print("StallGuard!")
-    tmc.tmc_mc.stop()
+tmc.run_to_position_fullsteps(200)                              #move to position 200 (fullsteps)
+tmc.run_to_position_fullsteps(0)                                #move to position 0
 
-tmc.set_stallguard_callback(26, 50, my_callback) # after this function call, StallGuard is active
+tmc.run_to_position_fullsteps(200, MovementAbsRel.RELATIVE)     #move 200 fullsteps forward
+tmc.run_to_position_fullsteps(-200, MovementAbsRel.RELATIVE)    #move 200 fullsteps backward
 
+tmc.run_to_position_steps(400)                                  #move to position 400 (µsteps)
+tmc.run_to_position_steps(0)                                    #move to position 0
 
-#uses STEP/DIR to move the motor
-result = tmc.run_to_position_steps(4000, MovementAbsRel.RELATIVE)
-#uses VActual Register to  move the motor
-# result = tmc.set_vactual_rpm(30, revolutions=10)
-
-if result is StopMode.NO:
-    print("Movement finished successfully")
-else:
-    print("Movement was not completed")
-
-
-
-
-
-#-----------------------------------------------------------------------
-# homing
-# 1. param: DIAG pin
-# 2. param: maximum number of revolutions. Can be negative for inverse direction
-# 3. param(optional): StallGuard detection threshold
-#-----------------------------------------------------------------------
-#tmc.do_homing(26, 1, 50)
-
-
+tmc.run_to_position_revolutions(1)                              #move 1 revolution forward
+tmc.run_to_position_revolutions(0)                              #move 1 revolution backward
 
 
 
 #-----------------------------------------------------------------------
 # deactivate the motor current output
 #-----------------------------------------------------------------------
+print("AFTER MOVEMENT")
+print(f"Temperature:\t{tmc.get_temperature()} °C")
+print(f"VSupply:\t{tmc.get_vsupply()} V")
 tmc.set_motor_enabled(False)
 
 print("---\n---")

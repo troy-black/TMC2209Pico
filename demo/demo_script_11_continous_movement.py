@@ -1,5 +1,5 @@
 """
-test file for testing the StallGuard feature
+test file for testing basic movement
 """
 
 import time
@@ -26,13 +26,13 @@ if BOARD == Board.RASPBERRY_PI:
 elif BOARD == Board.RASPBERRY_PI5:
     tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/ttyAMA0"), loglevel=Loglevel.DEBUG)
 elif BOARD == Board.NVIDIA_JETSON:
-    raise NotImplementedError('''
-        Not implemented. Needs refinement.\n
-        Nvidia Jetson has nuances with the parameter pull_up_down for pin_stallguard:
-        https://github.com/NVIDIA/jetson-gpio/issues/5''')
+    tmc = Tmc2209(TmcEnableControlPin(13), TmcMotionControlStepDir(6, 5), TmcComUart("/dev/ttyTHS1"), loglevel=Loglevel.DEBUG)
 else:
     # just in case
     tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/serial0"), loglevel=Loglevel.DEBUG)
+
+
+
 
 
 
@@ -79,11 +79,15 @@ print("---\n---")
 
 
 
+
+
 #-----------------------------------------------------------------------
-# set the Accerleration and maximal Speed
+# set the max Speed and Speed in fullsteps
 #-----------------------------------------------------------------------
-tmc.acceleration_fullstep = 1000
-tmc.max_speed_fullstep = 250
+tmc.tmc_mc.max_speed_fullstep = 200
+tmc.tmc_mc.speed_fullstep = 100
+
+
 
 
 
@@ -99,51 +103,13 @@ tmc.set_motor_enabled(True)
 
 
 #-----------------------------------------------------------------------
-# runs the motor 800 steps in a thread and
-# prints the stallguard result for each movement phase
+# move the motor 4 seconds
 #-----------------------------------------------------------------------
-tmc.test_stallguard_threshold(800)
+time_start = time.time()
 
+while time.time() < time_start + 4:
+    tmc.tmc_mc.run_speed()
 
-
-
-
-#-----------------------------------------------------------------------
-# set a callback function for the stallguard interrupt based detection
-# 1. param: pin connected to the tmc DIAG output
-# 2. param: is the threshold StallGuard
-# 3. param: is the callback function (threaded)
-# 4. param (optional): min speed threshold (in steptime measured  in  clock  cycles)
-#-----------------------------------------------------------------------
-def my_callback():
-    """StallGuard callback"""
-    print("StallGuard!")
-    tmc.tmc_mc.stop()
-
-tmc.set_stallguard_callback(26, 50, my_callback) # after this function call, StallGuard is active
-
-
-#uses STEP/DIR to move the motor
-result = tmc.run_to_position_steps(4000, MovementAbsRel.RELATIVE)
-#uses VActual Register to  move the motor
-# result = tmc.set_vactual_rpm(30, revolutions=10)
-
-if result is StopMode.NO:
-    print("Movement finished successfully")
-else:
-    print("Movement was not completed")
-
-
-
-
-
-#-----------------------------------------------------------------------
-# homing
-# 1. param: DIAG pin
-# 2. param: maximum number of revolutions. Can be negative for inverse direction
-# 3. param(optional): StallGuard detection threshold
-#-----------------------------------------------------------------------
-#tmc.do_homing(26, 1, 50)
 
 
 

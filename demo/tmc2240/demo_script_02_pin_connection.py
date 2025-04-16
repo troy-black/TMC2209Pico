@@ -1,12 +1,12 @@
 """
-debug file for debuging the UART connection
+test file for testing the STEP, DIR, EN connection
 """
 
 import time
 try:
-    from src.tmc_driver.tmc_2209 import *
+    from src.tmc_driver.tmc_2240 import *
 except ModuleNotFoundError:
-    from tmc_driver.tmc_2209 import *
+    from tmc_driver.tmc_2240 import *
 
 
 print("---")
@@ -22,25 +22,20 @@ print("---")
 # use your pins for pin_en, pin_step, pin_dir here
 #-----------------------------------------------------------------------
 if BOARD == Board.RASPBERRY_PI:
-    tmc = Tmc2209(None, None)
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
 elif BOARD == Board.RASPBERRY_PI5:
-    tmc = Tmc2209(None, None)
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
 elif BOARD == Board.NVIDIA_JETSON:
-    tmc = Tmc2209(None, None)
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
 else:
     # just in case
-    tmc = Tmc2209(None, None)
+    tmc = Tmc2240(TmcEnableControlPin(26), TmcMotionControlStepDir(13, 19), TmcComSpi(0, 0))
 
 
-if BOARD == Board.RASPBERRY_PI:
-    tmc.tmc_com = TmcComUart("/dev/serial0")
-elif BOARD == Board.RASPBERRY_PI5:
-    tmc.tmc_com = TmcComUart("/dev/ttyAMA0")
-elif BOARD == Board.NVIDIA_JETSON:
-    tmc.tmc_com = TmcComUart("/dev/ttyTHS1")
 
-tmc.tmc_com.tmc_logger = tmc.tmc_logger
-tmc.tmc_com.init()
+
+
+
 
 
 #-----------------------------------------------------------------------
@@ -55,15 +50,38 @@ tmc.movement_abs_rel = MovementAbsRel.ABSOLUTE
 
 
 
+#-----------------------------------------------------------------------
+# these functions change settings in the TMC register
+#-----------------------------------------------------------------------
+tmc.set_direction_reg(False)
+tmc.set_current(300)
+tmc.set_interpolation(True)
+tmc.set_spreadcycle(False)
+tmc.set_microstepping_resolution(2)
 
 
-#-----------------------------------------------------------------------
-# these functions read and print the current settings in the TMC register
-#-----------------------------------------------------------------------
 print("---\n---")
 
-tmc.test_com()
 
+
+
+
+#-----------------------------------------------------------------------
+# this function test whether the connection of the DIR, STEP and EN pin
+# between Raspberry Pi and TMC driver is working
+#-----------------------------------------------------------------------
+tmc.test_dir_step_en()
+
+print("---\n---")
+
+
+
+
+
+#-----------------------------------------------------------------------
+# deactivate the motor current output
+#-----------------------------------------------------------------------
+tmc.set_motor_enabled(False)
 
 print("---\n---")
 

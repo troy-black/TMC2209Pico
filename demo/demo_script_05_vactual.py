@@ -1,18 +1,12 @@
-#pylint: disable=wildcard-import
-#pylint: disable=unused-wildcard-import
-#pylint: disable=unused-import
-#pylint: disable=duplicate-code
 """
 test file for testing the VActual
 """
 
 import time
 try:
-    from src.TMC_2209.TMC_2209_StepperDriver import *
-    from src.TMC_2209._TMC_2209_GPIO_board import Board
+    from src.tmc_driver.tmc_2209 import *
 except ModuleNotFoundError:
-    from TMC_2209.TMC_2209_StepperDriver import *
-    from TMC_2209._TMC_2209_GPIO_board import Board
+    from tmc_driver.tmc_2209 import *
 
 
 print("---")
@@ -24,20 +18,18 @@ print("---")
 
 
 #-----------------------------------------------------------------------
-# initiate the TMC_2209 class
+# initiate the Tmc2209 class
 # use your pin for pin_en here
 #-----------------------------------------------------------------------
 if BOARD == Board.RASPBERRY_PI:
-    tmc = TMC_2209(21, 16, 20)
+    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlVActual(), TmcComUart("/dev/serial0"), loglevel=Loglevel.DEBUG)
 elif BOARD == Board.RASPBERRY_PI5:
-    tmc = TMC_2209(21, 16, 20, serialport="/dev/ttyAMA0")
+    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlVActual(), TmcComUart("/dev/ttyAMA0"), loglevel=Loglevel.DEBUG)
 elif BOARD == Board.NVIDIA_JETSON:
-    tmc = TMC_2209(13, 6, 5, serialport="/dev/ttyTHS1")
+    tmc = Tmc2209(TmcEnableControlPin(13), TmcMotionControlVActual(), TmcComUart("/dev/ttyTHS1"), loglevel=Loglevel.DEBUG)
 else:
     # just in case
-    tmc = TMC_2209(21, 16, 20)
-
-
+    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlVActual(), TmcComUart("/dev/serial0"), loglevel=Loglevel.DEBUG)
 
 
 #-----------------------------------------------------------------------
@@ -45,8 +37,8 @@ else:
 # set whether the movement should be relative or absolute
 # both optional
 #-----------------------------------------------------------------------
-tmc.tmc_logger.set_loglevel(Loglevel.DEBUG)
-tmc.set_movement_abs_rel(MovementAbsRel.ABSOLUTE)
+tmc.tmc_logger.loglevel = Loglevel.DEBUG
+tmc.movement_abs_rel = MovementAbsRel.ABSOLUTE
 
 
 
@@ -96,13 +88,13 @@ tmc.set_motor_enabled(True)
 # move the motor for 1 second forward, stop for 1 second
 # and then move backwards for 1 second
 #-----------------------------------------------------------------------
-#tmc.set_vactual_dur(400)
+#tmc.tmc_mc.set_vactual_dur(400)
 #time.sleep(1)
-#tmc.set_vactual_dur(0)
+#tmc.tmc_mc.set_vactual_dur(0)
 #time.sleep(1)
-#tmc.set_vactual_dur(-400)
+#tmc.tmc_mc.set_vactual_dur(-400)
 #time.sleep(1)
-#tmc.set_vactual_dur(0)
+#tmc.tmc_mc.set_vactual_dur(0)
 
 
 
@@ -111,13 +103,13 @@ tmc.set_motor_enabled(True)
 #-----------------------------------------------------------------------
 # set_vactual_rps uses revolutions per seconds as parameter
 #-----------------------------------------------------------------------
-# tmc.set_vactual_rps(1)
+# tmc.tmc_mc.set_vactual_rps(1)
 # time.sleep(1)
-# tmc.set_vactual_rps(0)
+# tmc.tmc_mc.set_vactual_rps(0)
 # time.sleep(1)
-# tmc.set_vactual_rps(-1)
+# tmc.tmc_mc.set_vactual_rps(-1)
 # time.sleep(1)
-# tmc.set_vactual_rps(0)
+# tmc.tmc_mc.set_vactual_rps(0)
 
 
 
@@ -126,13 +118,13 @@ tmc.set_motor_enabled(True)
 #-----------------------------------------------------------------------
 # set_vactual_rps uses revolutions per seconds as parameter
 #-----------------------------------------------------------------------
-#tmc.set_vactual_rpm(60)
+#tmc.tmc_mc.set_vactual_rpm(60)
 #time.sleep(1)
-#tmc.set_vactual(0)
+#tmc.tmc_mc.set_vactual(0)
 #time.sleep(1)
-#tmc.set_vactual_rpm(-60)
+#tmc.tmc_mc.set_vactual_rpm(-60)
 #time.sleep(1)
-#tmc.set_vactual(0)
+#tmc.tmc_mc.set_vactual(0)
 
 
 
@@ -145,11 +137,11 @@ tmc.set_motor_enabled(True)
 # the script will calculate the duration based on the speed and the revolutions
 # Movement of the Motor will not be very accurate with this way
 #-----------------------------------------------------------------------
-tmc.set_vactual_rpm(30, revolutions=2)
-tmc.set_vactual_rpm(-120, revolutions=2)
+tmc.tmc_mc.set_vactual_rpm(30, revolutions=2)
+tmc.tmc_mc.set_vactual_rpm(-120, revolutions=2)
 time.sleep(1)
-tmc.set_vactual_rpm(30, duration=4)
-tmc.set_vactual_rpm(-120, duration=1)
+tmc.tmc_mc.set_vactual_rpm(30, duration=4)
+tmc.tmc_mc.set_vactual_rpm(-120, duration=1)
 
 
 
@@ -159,7 +151,7 @@ tmc.set_vactual_rpm(-120, duration=1)
 # use acceleration (velocity ramping) with VActual
 # does not work with revolutions as parameter
 #-----------------------------------------------------------------------
-# tmc.set_vactual_rpm(-120, duration=10, acceleration=500)
+# tmc.tmc_mc.set_vactual_rpm(-120, duration=10, acceleration=500)
 
 
 
@@ -177,7 +169,7 @@ print("---\n---")
 
 
 #-----------------------------------------------------------------------
-# deinitiate the TMC_2209 class
+# deinitiate the Tmc2209 class
 #-----------------------------------------------------------------------
 del tmc
 

@@ -1,18 +1,12 @@
-#pylint: disable=wildcard-import
-#pylint: disable=unused-wildcard-import
-#pylint: disable=unused-import
-#pylint: disable=duplicate-code
 """
 test file for testing the STEP, DIR, EN connection
 """
 
 import time
 try:
-    from src.TMC_2209.TMC_2209_StepperDriver import *
-    from src.TMC_2209._TMC_2209_GPIO_board import Board
+    from src.tmc_driver.tmc_2209 import *
 except ModuleNotFoundError:
-    from TMC_2209.TMC_2209_StepperDriver import *
-    from TMC_2209._TMC_2209_GPIO_board import Board
+    from tmc_driver.tmc_2209 import *
 
 
 print("---")
@@ -24,18 +18,18 @@ print("---")
 
 
 #-----------------------------------------------------------------------
-# initiate the TMC_2209 class
+# initiate the Tmc2209 class
 # use your pins for pin_en, pin_step, pin_dir here
 #-----------------------------------------------------------------------
 if BOARD == Board.RASPBERRY_PI:
-    tmc = TMC_2209(21, 16, 20)
+    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/serial0"), loglevel=Loglevel.DEBUG)
 elif BOARD == Board.RASPBERRY_PI5:
-    tmc = TMC_2209(21, 16, 20, serialport="/dev/ttyAMA0")
+    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/ttyAMA0"), loglevel=Loglevel.DEBUG)
 elif BOARD == Board.NVIDIA_JETSON:
-    tmc = TMC_2209(13, 6, 5, serialport="/dev/ttyTHS1")
+    tmc = Tmc2209(TmcEnableControlPin(13), TmcMotionControlStepDir(6, 5), TmcComUart("/dev/ttyTHS1"), loglevel=Loglevel.DEBUG)
 else:
     # just in case
-    tmc = TMC_2209(21, 16, 20)
+    tmc = Tmc2209(TmcEnableControlPin(21), TmcMotionControlStepDir(16, 20), TmcComUart("/dev/serial0"), loglevel=Loglevel.DEBUG)
 
 
 
@@ -49,8 +43,8 @@ else:
 # set whether the movement should be relative or absolute
 # both optional
 #-----------------------------------------------------------------------
-tmc.tmc_logger.set_loglevel(Loglevel.DEBUG)
-tmc.set_movement_abs_rel(MovementAbsRel.ABSOLUTE)
+tmc.tmc_logger.loglevel = Loglevel.DEBUG
+tmc.movement_abs_rel = MovementAbsRel.ABSOLUTE
 
 
 
@@ -97,7 +91,7 @@ print("---\n---")
 
 
 #-----------------------------------------------------------------------
-# deinitiate the TMC_2209 class
+# deinitiate the Tmc2209 class
 #-----------------------------------------------------------------------
 del tmc
 
